@@ -3,6 +3,7 @@
     import { onMount } from 'svelte';
     import CharacterDisplay from '$lib/CharacterDisplay.svelte';
     import { getDefaultCharacter } from '$lib/character';
+    import type { PageLoad } from './$types';
 
     const character = getDefaultCharacter();
 
@@ -14,16 +15,23 @@
         document.documentElement.style.setProperty('--buttonText', theme.buttonText);
         document.documentElement.style.setProperty('--textPrimary', theme.textPrimary);
     });
-    let items = [];
+    let inventoryItems = [];
+    let moneyAmount = 0;
 
-    onMount(async () => {
-        const res = await fetch('/data.json');
-        if (res.ok) {
-            items = await res.json();
-        } else {
-            console.error('Failed to fetch data');
+    export const load: PageLoad = async ({ fetch }) => {
+        const res = await fetch('/data/player.json');
+
+        if (!res.ok) {
+            throw new Error('Failed to load player data');
         }
-    });
+
+        const player = await res.json();
+
+        return {
+            moneyAmount: player.moneyAmount,
+            inventoryItems: player.inventoryItems
+        };
+    };
 </script>
 
 <main>
