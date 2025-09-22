@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import { theme } from '$lib/theme';
     import { onMount } from 'svelte';
     import {
@@ -14,7 +15,7 @@
         resultMessage,
         handleSubmitWithPopup
     } from '$lib/writing-screen';
-    import { goto } from '$app/navigation';
+    
 
     let textValue = '';
     let currentWordCount = 0;
@@ -39,8 +40,10 @@
         }
     }
 
-    async function onSubmit() {
-        await handleSubmitWithPopup(textValue, currentWordCount);
+    function onSubmit() {
+        handleSubmit(textValue, currentWordCount);
+        goto('/leaderboard');
+        
     }
 
     function onNewPrompt() {
