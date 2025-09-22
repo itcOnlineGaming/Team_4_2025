@@ -23,6 +23,24 @@
         paths.hats[1],
         paths.hats[2]
     ]
+
+    const bodies =[
+        paths.body[0],
+        paths.body[1],
+        paths.body[2]
+    ]
+
+    const shirts =[
+        paths.shirts[0],
+        paths.shirts[1],
+        paths.shirts[2]
+    ]
+
+    const tabs = [
+        {label: "Hats", icon: "🎩"},
+        {label: "Body", icon: "👚"},
+        {label: "Bottoms", icon: "👖"}
+    ];
 </script>
 
 <main>
@@ -45,6 +63,7 @@
     </div>
 
     <div class="inventory">
+
         <div class="hatsTab">
                 {#each hats as hat, i}
                     <div
@@ -53,6 +72,26 @@
                         <span>Hat {i}</span>
                     </div>
                 {/each}
+        </div>
+
+        <div class="bodiesTab">
+            {#each bodies as body, i}
+                <div
+                        on:click={() => character.body = paths.body[i]}
+                >
+                    <span>Body {i}</span>
+                </div>
+            {/each}
+        </div>
+
+        <div class="shirtsTab">
+            {#each shirts as shirt, i}
+                <div
+                        on:click={() => character.shirt = paths.shirts[i]}
+                >
+                    <span>Shirt {i}</span>
+                </div>
+            {/each}
         </div>
     </div>
 </main>
