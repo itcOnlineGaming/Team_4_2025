@@ -11,9 +11,9 @@
       <path d="M12 44c0-6.6 5.4-12 12-12h0c6.6 0 12 5.4 12 12"/>
     </svg>
   </div>
-  
+
   <div class="title">Leaderboard</div>
-  
+
   <ul class="list">
     {#each players.slice(0,3) as player, i}
       <li>
@@ -23,10 +23,6 @@
       </li>
     {/each}
   </ul>
-  
-  <div class="home-button">
-    <button>🏠 Home</button>
-  </div>
 </div>
 
 <style>
