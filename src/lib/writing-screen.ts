@@ -1,4 +1,6 @@
 import { writable } from 'svelte/store';
+import { tick } from 'svelte';
+import { incrementStreakCounter } from '$lib/streakCounter';
 
 // Store for the current text content
 export const textContent = writable('');
@@ -99,4 +101,21 @@ export function getWordCountStatus(count: number): 'normal' | 'warning' | 'limit
     if (count >= 300) return 'limit';
     if (count > 250) return 'warning';
     return 'normal';
+}
+
+export const showResultPopup = writable(false);
+export const resultMessage = writable('');
+
+export async function handleSubmitWithPopup(text: string, count: number): Promise<void> {
+    if (text.trim()) {
+        if (count >= 300) {
+            incrementStreakCounter();
+            resultMessage.set('CONGRATS! You reached 300 words!');
+        } else {
+            resultMessage.set("Oh no! You didn't get 300 words.");
+        }
+        showResultPopup.set(true);
+        // Optionally, add logic to save the story to a database or API
+        console.log('Story submitted:', { text, wordCount: count });
+    }
 }

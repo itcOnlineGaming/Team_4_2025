@@ -10,19 +10,27 @@
         handleSubmit,
         generateNewPrompt,
         initializeWritingScreen,
-        getWordCountStatus
+        getWordCountStatus,
+        showResultPopup,
+        resultMessage,
+        handleSubmitWithPopup
     } from '$lib/writing-screen';
+    import { goto } from '$app/navigation';
 
     let textValue = '';
     let currentWordCount = 0;
     let prompt = '';
     let wordCountStatus: 'normal' | 'warning' | 'limit' = 'normal';
+    let showPopup = false;
+    let popupMessage = '';
 
     // Subscribe to stores
     $: textValue = $textContent;
     $: currentWordCount = $wordCount;
     $: prompt = $currentPrompt;
     $: wordCountStatus = getWordCountStatus(currentWordCount);
+    $: showPopup = $showResultPopup;
+    $: popupMessage = $resultMessage;
 
     function onTextInput(event: Event) {
         const target = event.target as HTMLTextAreaElement;
@@ -40,6 +48,11 @@
 
     function onNewPrompt() {
         generateNewPrompt();
+    }
+
+    function closePopup() {
+        showResultPopup.set(false);
+        goto('/');
     }
 
     onMount(() => {
@@ -90,6 +103,15 @@
             </button>
         </div>
     </div>
+
+    {#if showPopup}
+    <div class="popup-overlay">
+        <div class="popup-container">
+            <div class="popup-title">{popupMessage}</div>
+            <button class="popup-close" on:click={closePopup}>Close</button>
+        </div>
+    </div>
+    {/if}
 </main>
 
 <style>
@@ -236,5 +258,48 @@
         background-color: #ccc;
         cursor: not-allowed;
         opacity: 0.6;
+    }
+    .popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .popup-container {
+        background: #f0f0f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 32px #0008;
+        padding: 2rem 2.5rem;
+        min-width: 260px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+    .popup-title {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .popup-close {
+        background: #2196f3;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 0.6rem 1.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.2s;
+    }
+    .popup-close:hover {
+        background: #1769aa;
     }
 </style>

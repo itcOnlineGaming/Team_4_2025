@@ -3,7 +3,7 @@
     import { onMount } from 'svelte';
     import CharacterDisplay from '$lib/CharacterDisplay.svelte';
     import { getDefaultCharacter } from '$lib/character';
-    import type { PageLoad } from './$types';
+    import paths from '$lib/assets/paths.json';
 
     const character = getDefaultCharacter();
 
@@ -18,20 +18,11 @@
     let inventoryItems = [];
     let moneyAmount = 0;
 
-    export const load: PageLoad = async ({ fetch }) => {
-        const res = await fetch('/data/player.json');
-
-        if (!res.ok) {
-            throw new Error('Failed to load player data');
-        }
-
-        const player = await res.json();
-
-        return {
-            moneyAmount: player.moneyAmount,
-            inventoryItems: player.inventoryItems
-        };
-    };
+    const hats =[
+        paths.hats[0],
+        paths.hats[1],
+        paths.hats[2]
+    ]
 </script>
 
 <main>
@@ -54,7 +45,15 @@
     </div>
 
     <div class="inventory">
-
+        <div class="hatsTab">
+                {#each hats as hat, i}
+                    <div
+                            on:click={() => character.hat = paths.hats[i]}
+                    >
+                        <span>Hat {i}</span>
+                    </div>
+                {/each}
+        </div>
     </div>
 </main>
 
