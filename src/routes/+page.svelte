@@ -81,10 +81,14 @@
         </a>
 
         <!-- Correct button with goto -->
-        <button class="button" on:click={goToLeaderboard}>
+         <a href="/inventory" class="button">
+            <span class="icon">💼</span>
+            Inventory (Temporary)
+        </a>
+        <!-- <button class="button" on:click={goToLeaderboard}>
             <span class="icon">🏆</span>
             Leaderboard
-        </button>
+        </button> -->
 
     </div>
     

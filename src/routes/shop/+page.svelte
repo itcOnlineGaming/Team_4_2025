@@ -22,21 +22,21 @@
         {label: "Hats 6", icon: "🎩"}
     ];
     const topSubSections = [
-        {label: "Hats 1", icon: "🎩"},
-        {label: "Hats 2", icon: "🎩"},
-        {label: "Hats 3", icon: "🎩"},
-        {label: "Hats 4", icon: "🎩"},
-        {label: "Hats 5", icon: "🎩"},
-        {label: "Hats 6", icon: "🎩"}
+        {label: "Top 1", icon: "👚"},
+        {label: "Top 2", icon: "👚"},
+        {label: "Top 3", icon: "👚"},
+        {label: "Top 4", icon: "👚"},
+        {label: "Top 5", icon: "👚"},
+        {label: "Top 6", icon: "👚"}
     ];
 
     const bottomsSubSections = [
-        {label: "Bottoms 1", icon: "🎩"},
-        {label: "Bottoms 2", icon: "🎩"},
-        {label: "Bottoms 3", icon: "🎩"},
-        {label: "Bottoms 4", icon: "🎩"},
-        {label: "Bottoms 5", icon: "🎩"},
-        {label: "Bottoms 6", icon: "🎩"}
+        {label: "Bottoms 1", icon: "👖"},
+        {label: "Bottoms 2", icon: "👖"},
+        {label: "Bottoms 3", icon: "👖"},
+        {label: "Bottoms 4", icon: "👖"},
+        {label: "Bottoms 5", icon: "👖"},
+        {label: "Bottoms 6", icon: "👖"}
     ];
 
 
@@ -293,6 +293,30 @@
     }
 
     .bottoms-label {
+    font-size: 1rem;
+    color: #fff;
+    }
+
+    .top-item {
+    background: #333;
+    padding: 45px 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    cursor: pointer;
+    transition: background 0.2s;
+    }
+
+    .top-item:hover {
+    background: #444;
+    }
+
+    .top-icon {
+    font-size: 1.5rem;
+    }
+
+    .top-label {
     font-size: 1rem;
     color: #fff;
     }
