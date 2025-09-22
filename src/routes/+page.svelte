@@ -1,4 +1,5 @@
 <script lang="ts">
+
     import { theme } from '$lib/theme';
     import { onMount } from 'svelte';
     import CharacterDisplay from '$lib/CharacterDisplay.svelte';
@@ -25,6 +26,29 @@
         // Get streak from localStorage once we're in the browser
         streak = getStreakCounter();
     });
+    
+  import { goto } from '$app/navigation';
+  import Leaderboard from '$lib/components/Leaderboard.svelte';
+
+  let players = [
+      { name: "Alice", score: 90 },
+      { name: "Bob", score: 80 },
+      { name: "Charlie", score: 70 },
+  ];
+
+  onMount(() => {
+      document.documentElement.style.setProperty('--background', theme.background);
+      document.documentElement.style.setProperty('--bubbleBackground', theme.bubbleBackground);
+      document.documentElement.style.setProperty('--buttonPrimary', theme.buttonPrimary);
+      document.documentElement.style.setProperty('--buttonHover', theme.buttonHover);
+      document.documentElement.style.setProperty('--buttonText', theme.buttonText);
+      document.documentElement.style.setProperty('--textPrimary', theme.textPrimary);
+  });
+
+  // Function to navigate to leaderboard
+  function goToLeaderboard() {
+    goto('/leaderboard');
+  }
 </script>
 
 <main>
@@ -55,10 +79,13 @@
             <span class="icon">🛍️</span>
             Shop
         </a>
-        <a href="/inventory" class="button">
-            <span class="icon">💼</span>
-            Inventory (Temporary)
-        </a>
+
+        <!-- Correct button with goto -->
+        <button class="button" on:click={goToLeaderboard}>
+            <span class="icon">🏆</span>
+            Leaderboard
+        </button>
+
     </div>
     
     <div class="character-container">
@@ -139,6 +166,7 @@
         transition: background-color 0.2s;
         min-width: 200px;
         border: none;
+
         cursor: pointer;
     }
 
