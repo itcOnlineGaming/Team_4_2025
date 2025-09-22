@@ -15,7 +15,7 @@
         resultMessage,
         handleSubmitWithPopup
     } from '$lib/writing-screen';
-    import { goto } from '$app/navigation';
+    
 
     let textValue = '';
     let currentWordCount = 0;
