@@ -30,10 +30,10 @@
 <main>
     <div class="streak-container">
         <div class="streak">🔥 Streak: {streak}</div>
-        <button class="button increment-button" on:click={handleIncrementStreak}>
+        <!-- <button class="button increment-button" on:click={handleIncrementStreak}>
             <span class="icon">⬆️</span>
             Increment Streak
-        </button>
+        </button> -->
     </div>
     
     <div class="flamingo-container">

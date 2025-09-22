@@ -2,6 +2,10 @@
     import { theme } from '$lib/theme';
     import { onMount } from 'svelte';
     import { fly } from 'svelte/transition';
+    import CharacterDisplay from '$lib/CharacterDisplay.svelte';
+    import { getDefaultCharacter } from '$lib/character';
+
+    const character = getDefaultCharacter();
     let showContainer = false;
     let activeSection = 0;
     const tabs = [
@@ -9,14 +13,14 @@
         {label: "Body", icon: "👚"},
         {label: "Bottoms", icon: "👖"}
     ];
-    // const subSections = [
-    //     {label: "Hats 1", icon: "🎩"},
-    //     {label: "Hats 2", icon: "🎩"},
-    //     {label: "Hats 3", icon: "🎩"},
-    //     {label: "Hats 4", icon: "🎩"},
-    //     {label: "Hats 5", icon: "🎩"},
-    //     {label: "Hats 6", icon: "🎩"}
-    // ];
+    const hatSubSections = [
+        {label: "Hats 1", icon: "🎩"},
+        {label: "Hats 2", icon: "🎩"},
+        {label: "Hats 3", icon: "🎩"},
+        {label: "Hats 4", icon: "🎩"},
+        {label: "Hats 5", icon: "🎩"},
+        {label: "Hats 6", icon: "🎩"}
+    ];
 
     onMount(() => {
         document.documentElement.style.setProperty('--background', theme.background);
@@ -34,17 +38,15 @@
 
 <main>
     
-    <div class="flamingo-container">
+    <div class="character-container">
         <div class="bubble">
-            <span class="flamingo">🦩</span>
+            <span class="character">
+                <CharacterDisplay {character} />
+            </span>
         </div>
     </div>
-    
-    <div class="buttons">
-        <a href="/shop" class="button">
-            <span class="icon">🛍️</span>
-            Shop
-        </a>
+    <div class="back-button">
+        <a href="/" class="back-link">← Back to Home</a>
     </div>
 
 {#if showContainer}
@@ -90,17 +92,12 @@
         align-items: center;
     }
 
-    .flamingo-container {
-        margin-top: 3rem;
-        margin-bottom: 2rem;
-    }
-
     .equiptment-container {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100vw;
-        height: 40vh;
+        height: 50vh;
         background: #222;
         border-top-left-radius: 24px;
         border-top-right-radius: 24px;
@@ -118,15 +115,11 @@
         background-color: var(--bubbleBackground);
         border-radius: 50%;
         width: 200px;
-        height: 200px;
+        height: 400px;
         display: flex;
         align-items: center;
         justify-content: center;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .flamingo {
-        font-size: 100px;
     }
 
     .buttons {
@@ -214,6 +207,26 @@
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
+    }
+
+    .back-button {
+        padding: 1rem;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+    }
+    .back-link {
+        color: #2d4a2d;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.8);
+        transition: background-color 0.2s;
+    }
+    .back-link:hover {
+        background-color: rgba(255, 255, 255, 1);
     }
 
 </style>
