@@ -21,6 +21,24 @@
         {label: "Hats 5", icon: "🎩"},
         {label: "Hats 6", icon: "🎩"}
     ];
+    const topSubSections = [
+        {label: "Hats 1", icon: "🎩"},
+        {label: "Hats 2", icon: "🎩"},
+        {label: "Hats 3", icon: "🎩"},
+        {label: "Hats 4", icon: "🎩"},
+        {label: "Hats 5", icon: "🎩"},
+        {label: "Hats 6", icon: "🎩"}
+    ];
+
+    const bottomsSubSections = [
+        {label: "Bottoms 1", icon: "🎩"},
+        {label: "Bottoms 2", icon: "🎩"},
+        {label: "Bottoms 3", icon: "🎩"},
+        {label: "Bottoms 4", icon: "🎩"},
+        {label: "Bottoms 5", icon: "🎩"},
+        {label: "Bottoms 6", icon: "🎩"}
+    ];
+
 
     onMount(() => {
         document.documentElement.style.setProperty('--background', theme.background);
@@ -65,11 +83,26 @@
         </div>
             <div class="tab-content">
                     {#if activeSection === 0}
-                        <div>Content for Hats</div>
+                        {#each hatSubSections as hat}
+                        <div class="hat-item">
+                            <span class="hat-icon">{hat.icon}</span>
+                            <span class="hat-label">{hat.label}</span>
+                        </div>
+                        {/each}
                     {:else if activeSection === 1}
-                        <div>Content for Body</div>
+                        {#each topSubSections as hat}
+                        <!-- <div class="top-item">
+                            <span class="top-icon">{top.icon}</span>
+                            <span class="top-label">{hat.label}</span>
+                        </div> -->
+                        {/each}
                     {:else if activeSection === 2}
-                        <div>Content for Bottoms</div>
+                        {#each bottomsSubSections as bottoms}
+                        <div class="bottoms-item">
+                            <span class="bottoms-icon">{bottoms.icon}</span>
+                            <span class="bottoms-label">{bottoms.label}</span>
+                        </div>
+                        {/each}
                     {/if}
             </div>
     </div>
@@ -207,6 +240,61 @@
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
+    }
+
+    .hat-subsections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    padding: 30px;
+    }
+
+    .hat-item {
+    background: #333;
+    padding: 45px 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    cursor: pointer;
+    transition: background 0.2s;
+    }
+
+    .hat-item:hover {
+    background: #444;
+    }
+
+    .hat-icon {
+    font-size: 1.5rem;
+    }
+
+    .hat-label {
+    font-size: 1rem;
+    color: #fff;
+    }
+
+    .bottoms-item {
+    background: #333;
+    padding: 45px 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    cursor: pointer;
+    transition: background 0.2s;
+    }
+
+    .bottoms-item:hover {
+    background: #444;
+    }
+
+    .bottoms-icon {
+    font-size: 1.5rem;
+    }
+
+    .bottoms-label {
+    font-size: 1rem;
+    color: #fff;
     }
 
     .back-button {

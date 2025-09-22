@@ -47,10 +47,10 @@
             <span class="icon">✏️</span>
             Write
         </a>
-        <a href="/gamble" class="button">
+        <!-- <a href="/gamble" class="button">
             <span class="icon">🎲</span>
             Gamble
-        </a>
+        </a> -->
         <a href="/shop" class="button">
             <span class="icon">🛍️</span>
             Shop
