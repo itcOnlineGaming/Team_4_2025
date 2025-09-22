@@ -1,6 +1,8 @@
 import { writable } from 'svelte/store';
 import { tick } from 'svelte';
+
 import { incrementStreakCounter } from '$lib/streakCounter';
+import confetti from 'canvas-confetti';
 
 // Store for the current text content
 export const textContent = writable('');
@@ -111,6 +113,12 @@ export async function handleSubmitWithPopup(text: string, count: number): Promis
         if (count >= 300) {
             incrementStreakCounter();
             resultMessage.set('CONGRATS! You reached 300 words!');
+            // Trigger confetti effect
+            confetti({
+                particleCount: 120,
+                spread: 90,
+                origin: { y: 0.6 }
+            });
         } else {
             resultMessage.set("Oh no! You didn't get 300 words.");
         }
