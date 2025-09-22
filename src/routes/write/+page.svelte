@@ -41,8 +41,8 @@
     }
 
     function onSubmit() {
-        handleSubmit(textValue, currentWordCount);
-        goto('/leaderboard');
+        handleSubmitWithPopup(textValue, currentWordCount);
+
         
     }
 
@@ -232,10 +232,10 @@
         font-size: 1.1rem;
     }
     .count.warning {
-        color: #d4a017;
+        color: rgb(212, 125, 12);
     }
     .count.limit {
-        color: #c41e3a;
+        color: #29c41e;
     }
     .max-count {
         opacity: 0.7;
