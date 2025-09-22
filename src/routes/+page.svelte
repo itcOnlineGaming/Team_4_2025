@@ -3,21 +3,38 @@
     import { onMount } from 'svelte';
     import CharacterDisplay from '$lib/CharacterDisplay.svelte';
     import { getDefaultCharacter } from '$lib/character';
+    import { getStreakCounter, incrementStreakCounter } from '$lib/streakCounter';
 
     const character = getDefaultCharacter();
+    let streak = 0; // Initialize to 0 for SSR
+
+    function handleIncrementStreak() {
+        incrementStreakCounter();
+        streak = getStreakCounter();
+    }
 
     onMount(() => {
+        // Set theme variables
         document.documentElement.style.setProperty('--background', theme.background);
         document.documentElement.style.setProperty('--bubbleBackground', theme.bubbleBackground);
         document.documentElement.style.setProperty('--buttonPrimary', theme.buttonPrimary);
         document.documentElement.style.setProperty('--buttonHover', theme.buttonHover);
         document.documentElement.style.setProperty('--buttonText', theme.buttonText);
         document.documentElement.style.setProperty('--textPrimary', theme.textPrimary);
+
+        // Get streak from localStorage once we're in the browser
+        streak = getStreakCounter();
     });
 </script>
 
 <main>
-    <div class="streak">🔥 Streak: 0</div>
+    <div class="streak-container">
+        <div class="streak">🔥 Streak: {streak}</div>
+        <button class="button increment-button" on:click={handleIncrementStreak}>
+            <span class="icon">⬆️</span>
+            Increment Streak
+        </button>
+    </div>
     
     <div class="flamingo-container">
         <div class="bubble">
@@ -38,6 +55,10 @@
             <span class="icon">🛍️</span>
             Shop
         </a>
+        <a href="/inventory" class="button">
+            <span class="icon">💼</span>
+            Inventory (Temporary)
+        </a>
     </div>
     
     <div class="character-container">
@@ -56,12 +77,25 @@
         align-items: center;
     }
 
-    .streak {
+    .streak-container {
         position: absolute;
         top: 1rem;
         right: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+    }
+
+    .streak {
         font-size: 1.2rem;
         color: var(--textPrimary);
+    }
+
+    .increment-button {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        min-width: 150px;
     }
 
     .flamingo-container {
@@ -104,6 +138,8 @@
         font-size: 1.1rem;
         transition: background-color 0.2s;
         min-width: 200px;
+        border: none;
+        cursor: pointer;
     }
 
     .write-button {
