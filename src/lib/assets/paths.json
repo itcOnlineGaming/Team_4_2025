@@ -1,0 +1,44 @@
+{
+    "hats": [
+        {
+            "path": "/src/lib/assets/hat1.png",
+            "price": 100
+        },
+        {
+            "path": "/src/lib/assets/hat2.png",
+            "price": 200
+        },
+        {
+            "path": "/src/lib/assets/hat3.png",
+            "price": 300
+        }
+    ],
+    "body": [
+        {
+            "path": "/src/lib/assets/BaseBody1.png",
+            "price": 150
+        },
+        {
+            "path": "/src/lib/assets/BaseBody2.png",
+            "price": 250
+        },
+        {
+            "path": "/src/lib/assets/BaseBody3.png",
+            "price": 350
+        }
+    ],
+    "shirts": [
+        {
+            "path": "/src/lib/assets/shirt1.png",
+            "price": 120
+        },
+        {
+            "path": "/src/lib/assets/shirt2.png",
+            "price": 220
+        },
+        {
+            "path": "/src/lib/assets/shirt3.png",
+            "price": 320
+        }
+    ]
+}

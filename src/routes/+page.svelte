@@ -1,6 +1,10 @@
 <script lang="ts">
     import { theme } from '$lib/theme';
     import { onMount } from 'svelte';
+    import CharacterDisplay from '$lib/CharacterDisplay.svelte';
+    import { getDefaultCharacter } from '$lib/character';
+
+    const character = getDefaultCharacter();
 
     onMount(() => {
         document.documentElement.style.setProperty('--background', theme.background);
@@ -36,8 +40,8 @@
         </a>
     </div>
     
-    <div class="character-placeholder">
-        <!-- Character will be added here later -->
+    <div class="character-container">
+        <CharacterDisplay {character} />
     </div>
 </main>
 
@@ -115,12 +119,13 @@
         font-size: 1.2em;
     }
 
-    .character-placeholder {
+    .character-container {
         position: absolute;
         bottom: 2rem;
         width: 150px;
         height: 150px;
-        background-color: var(--bubbleBackground);
-        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 </style>
