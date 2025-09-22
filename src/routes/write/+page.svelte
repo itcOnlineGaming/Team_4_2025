@@ -52,7 +52,7 @@
 
     function closePopup() {
         showResultPopup.set(false);
-        goto('/');
+        goto('/leaderboard');
     }
 
     onMount(() => {
