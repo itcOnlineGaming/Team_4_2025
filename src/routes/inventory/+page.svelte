@@ -3,7 +3,7 @@
     import { onMount } from 'svelte';
     import CharacterDisplay from '$lib/CharacterDisplay.svelte';
     import { getDefaultCharacter } from '$lib/character';
-    import type { PageLoad } from './$types';
+    import paths from '$lib/assets/paths.json';
 
     const character = getDefaultCharacter();
 
@@ -18,20 +18,29 @@
     let inventoryItems = [];
     let moneyAmount = 0;
 
-    export const load: PageLoad = async ({ fetch }) => {
-        const res = await fetch('/data/player.json');
+    const hats =[
+        paths.hats[0],
+        paths.hats[1],
+        paths.hats[2]
+    ]
 
-        if (!res.ok) {
-            throw new Error('Failed to load player data');
-        }
+    const bodies =[
+        paths.body[0],
+        paths.body[1],
+        paths.body[2]
+    ]
 
-        const player = await res.json();
+    const shirts =[
+        paths.shirts[0],
+        paths.shirts[1],
+        paths.shirts[2]
+    ]
 
-        return {
-            moneyAmount: player.moneyAmount,
-            inventoryItems: player.inventoryItems
-        };
-    };
+    const tabs = [
+        {label: "Hats", icon: "🎩"},
+        {label: "Body", icon: "👚"},
+        {label: "Bottoms", icon: "👖"}
+    ];
 </script>
 
 <main>
@@ -55,6 +64,35 @@
 
     <div class="inventory">
 
+        <div class="hatsTab">
+                {#each hats as hat, i}
+                    <div
+                            on:click={() => character.hat = paths.hats[i]}
+                    >
+                        <span>Hat {i}</span>
+                    </div>
+                {/each}
+        </div>
+
+        <div class="bodiesTab">
+            {#each bodies as body, i}
+                <div
+                        on:click={() => character.body = paths.body[i]}
+                >
+                    <span>Body {i}</span>
+                </div>
+            {/each}
+        </div>
+
+        <div class="shirtsTab">
+            {#each shirts as shirt, i}
+                <div
+                        on:click={() => character.shirt = paths.shirts[i]}
+                >
+                    <span>Shirt {i}</span>
+                </div>
+            {/each}
+        </div>
     </div>
 </main>
 
