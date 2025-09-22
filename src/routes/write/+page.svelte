@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
     import { theme } from '$lib/theme';
     import { onMount } from 'svelte';
     import {
@@ -33,6 +34,8 @@
 
     function onSubmit() {
         handleSubmit(textValue, currentWordCount);
+        goto('/leaderboard');
+        
     }
 
     function onNewPrompt() {
