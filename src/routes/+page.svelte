@@ -38,6 +38,10 @@
             <span class="icon">🛍️</span>
             Shop
         </a>
+        <a href="/inventory" class="button">
+            <span class="icon">💼</span>
+            Inventory (Temporary)
+        </a>
     </div>
     
     <div class="character-container">
