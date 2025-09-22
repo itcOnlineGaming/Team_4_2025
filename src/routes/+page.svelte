@@ -1,15 +1,28 @@
 <script lang="ts">
-    import { theme } from '$lib/theme';
-    import { onMount } from 'svelte';
+  import { theme } from '$lib/theme';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import Leaderboard from '$lib/components/Leaderboard.svelte';
 
-    onMount(() => {
-        document.documentElement.style.setProperty('--background', theme.background);
-        document.documentElement.style.setProperty('--bubbleBackground', theme.bubbleBackground);
-        document.documentElement.style.setProperty('--buttonPrimary', theme.buttonPrimary);
-        document.documentElement.style.setProperty('--buttonHover', theme.buttonHover);
-        document.documentElement.style.setProperty('--buttonText', theme.buttonText);
-        document.documentElement.style.setProperty('--textPrimary', theme.textPrimary);
-    });
+  let players = [
+      { name: "Alice", score: 90 },
+      { name: "Bob", score: 80 },
+      { name: "Charlie", score: 70 },
+  ];
+
+  onMount(() => {
+      document.documentElement.style.setProperty('--background', theme.background);
+      document.documentElement.style.setProperty('--bubbleBackground', theme.bubbleBackground);
+      document.documentElement.style.setProperty('--buttonPrimary', theme.buttonPrimary);
+      document.documentElement.style.setProperty('--buttonHover', theme.buttonHover);
+      document.documentElement.style.setProperty('--buttonText', theme.buttonText);
+      document.documentElement.style.setProperty('--textPrimary', theme.textPrimary);
+  });
+
+  // Function to navigate to leaderboard
+  function goToLeaderboard() {
+    goto('/leaderboard');
+  }
 </script>
 
 <main>
@@ -34,6 +47,11 @@
             <span class="icon">🛍️</span>
             Shop
         </a>
+        <!-- Correct button with goto -->
+        <button class="button" on:click={goToLeaderboard}>
+            <span class="icon">🏆</span>
+            Leaderboard
+        </button>
     </div>
     
     <div class="character-placeholder">
@@ -100,6 +118,7 @@
         font-size: 1.1rem;
         transition: background-color 0.2s;
         min-width: 200px;
+        cursor: pointer;
     }
 
     .write-button {
