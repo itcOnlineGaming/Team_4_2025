@@ -1,9 +1,9 @@
 <script lang="ts">
+
     import { theme } from '../lib/theme';
     import { onMount } from 'svelte';
-    import Calendar from '../lib/components/Calendar.svelte';
 
-    let selectedDate = new Date();
+
 
     onMount(() => {
         // Set theme variables
@@ -13,60 +13,108 @@
         document.documentElement.style.setProperty('--buttonHover', theme.buttonHover);
         document.documentElement.style.setProperty('--buttonText', theme.buttonText);
         document.documentElement.style.setProperty('--textPrimary', theme.textPrimary);
+
     });
+    
+  import { goto } from '$app/navigation';
+  import Leaderboard from '../lib/components/Leaderboard.svelte';
+
+  let players = [
+      { name: "Alice", score: 90 },
+      { name: "Bob", score: 80 },
+      { name: "Charlie", score: 70 },
+  ];
+
+  onMount(() => {
+      document.documentElement.style.setProperty('--background', theme.background);
+      document.documentElement.style.setProperty('--bubbleBackground', theme.bubbleBackground);
+      document.documentElement.style.setProperty('--buttonPrimary', theme.buttonPrimary);
+      document.documentElement.style.setProperty('--buttonHover', theme.buttonHover);
+      document.documentElement.style.setProperty('--buttonText', theme.buttonText);
+      document.documentElement.style.setProperty('--textPrimary', theme.textPrimary);
+  });
+
+  // Function to navigate to leaderboard
+  function goToLeaderboard() {
+    goto('/leaderboard');
+  }
 </script>
 
-<svelte:head>
-    <title>Calendar</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-</svelte:head>
-
 <main>
-    <div class="page-header">
-        <h1>Calendar</h1>
-    </div>
     
-    <div class="calendar-wrapper">
-        <Calendar bind:selectedDate />
+    <div class="buttons">
+        <a href="/write" class="button write-button">
+            <span class="icon">✏️</span>
+            Write
+        </a>
+        <!-- <a href="/gamble" class="button">
+            <span class="icon">🎲</span>
+            Gamble
+        </a> -->
+        <a href="/shop" class="button">
+            <span class="icon">🛍️</span>
+            Shop
+        </a>
+
+        <!-- Correct button with goto -->
+         <a href="/inventory" class="button">
+            <span class="icon">💼</span>
+            Inventory (Temporary)
+        </a>
+        <!-- <button class="button" on:click={goToLeaderboard}>
+            <span class="icon">🏆</span>
+            Leaderboard
+        </button> -->
+
     </div>
 </main>
 
 <style>
     main {
+        position: relative;
         min-height: 100vh;
         background-color: var(--background);
         padding: 1rem;
-        font-family: 'Roboto', sans-serif;
-    }
-
-    .page-header {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
-        margin-bottom: 2rem;
-        max-width: 1200px;
-        margin-left: auto;
-        margin-right: auto;
     }
 
-    h1 {
-        color: var(--textPrimary);
-        font-size: 2rem;
-        font-weight: 500;
-        margin: 0;
-        font-family: 'Roboto', sans-serif;
+    .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin: 2rem 0;
     }
 
-    .calendar-wrapper {
-        max-width: 1200px;
-        margin: 0 auto;
+    .button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: var(--buttonPrimary);
+        color: var(--buttonText);
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 1.1rem;
+        transition: background-color 0.2s;
+        min-width: 200px;
+        border: none;
+
+        cursor: pointer;
     }
 
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 1.5rem;
-        }
+    .write-button {
+        font-size: 1.3rem;
+        padding: 1.2rem 2.4rem;
+    }
+
+    .button:hover {
+        background-color: var(--buttonHover);
+    }
+
+    .icon {
+        font-size: 1.2em;
     }
 </style>
