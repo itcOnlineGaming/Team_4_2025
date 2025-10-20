@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Leaderboard from '$lib/components/Leaderboard.svelte';
-  import type { Player } from '$lib/leaderboard';
+  import Leaderboard from '../../lib/components/Leaderboard.svelte';
+  //import type { Player } from '$lib/leaderboard';
 
   let players: Player[] = [
     { name: "Alice", score: 90 },

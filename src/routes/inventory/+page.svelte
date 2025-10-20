@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { theme } from '$lib/theme';
+    import { theme } from '../../lib/theme';
     import { onMount } from 'svelte';
-    import CharacterDisplay from '$lib/CharacterDisplay.svelte';
-    import { getDefaultCharacter } from '$lib/character';
-    import paths from '$lib/assets/paths.json';
+    import CharacterDisplay from '../../lib/CharacterDisplay.svelte';
+    import { getDefaultCharacter } from '../../lib/character';
+    import paths from '../../lib/assets/paths.json';
 
     const character = getDefaultCharacter();
 

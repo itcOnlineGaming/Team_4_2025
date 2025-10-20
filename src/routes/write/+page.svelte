@@ -1,6 +1,6 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { theme } from '$lib/theme';
+    import { theme } from '../../lib/theme';
     import { onMount } from 'svelte';
     import {
         textContent,
@@ -14,7 +14,7 @@
         showResultPopup,
         resultMessage,
         handleSubmitWithPopup
-    } from '$lib/writing-screen';
+    } from '../../lib/writing-screen';
     
 
     let textValue = '';

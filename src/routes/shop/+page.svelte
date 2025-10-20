@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { theme } from '$lib/theme';
+    import { theme } from '../../lib/theme';
     import { onMount } from 'svelte';
     import { fly } from 'svelte/transition';
-    import CharacterDisplay from '$lib/CharacterDisplay.svelte';
-    import { getDefaultCharacter } from '$lib/character';
+    import CharacterDisplay from '../../lib/CharacterDisplay.svelte';
+    import { getDefaultCharacter } from '../../lib/character';
 
     const character = getDefaultCharacter();
     let showContainer = false;
