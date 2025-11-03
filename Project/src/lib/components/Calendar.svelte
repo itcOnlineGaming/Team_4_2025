@@ -1,5 +1,18 @@
 <script lang="ts">
+    import { get } from "svelte/store";
+
     export let selectedDate: Date = new Date();
+    export let selectedHour: number = 0;
+    export let selectedDay: number = 0;
+
+    // very simple event shape
+    type CalendarEvent = {
+        id: number;
+        date: string;  // YYYY-MM-DD
+        time: string;  // HH:00
+        title: string;
+    };
+    export let events: CalendarEvent[] = [];
     
     // Days of the week
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -8,6 +21,10 @@
     const timeSlots: string[] = [];
     for (let hour = 0; hour < 24; hour++) {
         timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+
+    type timeCard = {
+        title: string;
     }
     
     // Get current week dates based on selectedDate
@@ -24,9 +41,33 @@
             const date = new Date(monday);
             date.setDate(monday.getDate() + i);
             weekDates.push(date);
+
         }
         return weekDates;
     }
+
+        let titles: string[][] = Array.from({ length: 24 }, () => Array(7).fill(''));
+
+        function initializeTitles() 
+        {
+            titles = [];
+            for (let i = 0; i < 24; i++) {
+                titles[i] = [];
+                for (let j = 0; j < 7; j++) {
+                    titles[i][j] = '';
+                }
+            }
+        }
+        initializeTitles();
+
+    function getIndexTitle(hour: number, day: number): string {
+        return (titles[hour][day]) ? titles[hour][day] : 'NULL';
+    }
+    function setIndexTitle(hour: number, day: number, title: string) {
+        titles[hour][day] = title;
+        titles = titles.map(row => row.slice());
+    }
+
     
     $: weekDates = getCurrentWeekDates(selectedDate);
     
@@ -59,6 +100,60 @@
     function goToToday() {
         selectedDate = new Date();
     }
+
+    // modal state (kept simple)
+  let showModal = false;
+  let targetDate = '';
+  let targetTime = '';
+  let titleInput = '';
+
+  function handleCellClick(e: MouseEvent) {
+    const el = e.currentTarget as HTMLElement;
+    targetDate = el.dataset.date || '';
+    targetTime = el.dataset.time || '';
+    titleInput = '';
+    showModal = true;
+  }
+
+  function closeModal() {
+    showModal = false;
+    titleInput = '';
+  }
+
+  function saveEvent() {
+    const t = titleInput.trim();
+    if (!t) { closeModal(); return; }
+    const ev: CalendarEvent = {
+      id: Date.now(), // simple id
+      date: targetDate,
+      time: targetTime,
+      title: t
+    };
+    // reassign to trigger update
+    events = [...events, ev];
+    try { localStorage.setItem('calendar_events_v1', JSON.stringify(events)); } catch {}
+    closeModal();
+  }
+
+  function eventsFor(d: string, t: string) {
+    return events.filter(e => e.date === d && e.time === t);
+  }
+
+  function deleteEvent(id: number) {
+    events = events.filter(e => e.id !== id);
+    try { localStorage.setItem('calendar_events_v1', JSON.stringify(events)); } catch {}
+  }
+
+  // simple load
+  if (!events.length) {
+    try {
+      const raw = localStorage.getItem('calendar_events_v1');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) events = parsed;
+      }
+    } catch {}
+  }
 </script>
 
 <div class="calendar-container">
@@ -103,12 +198,18 @@
                         {timeSlot}
                     </div>
                     {#each weekDates as date, dayIndex}
-                        <div class="calendar-cell" 
-                             data-time={timeSlot} 
-                             data-date={date.toISOString().split('T')[0]}
-                             class:current-hour={isToday(date) && new Date().getHours() === timeIndex}>
-                            <!-- This is where the tasks will go -->
-                        </div>
+                    <button
+                        class="calendar-cell-button"
+                        on:click={() => setIndexTitle(timeIndex, dayIndex, 'no meeting')}
+                        data-time={timeSlot}
+                        data-date={date.toISOString().split('T')[0]}
+                    >
+                        <p>{titles[timeIndex][dayIndex] || ''}</p>
+                        <div
+                        class="calendar-cell"
+                        class:current-hour={isToday(date) && new Date().getHours() === timeIndex}
+                        ></div>
+                    </button>
                     {/each}
                 </div>
             {/each}
