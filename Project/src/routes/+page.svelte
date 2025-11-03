@@ -16,57 +16,8 @@
     });
 </script>
 
-<svelte:head>
-    <title>Calendar</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-</svelte:head>
-
-<main>
-    <div class="page-header">
-        <h1>Calendar</h1>
-    </div>
-    
+<main>    
     <div class="calendar-wrapper">
         <Calendar bind:selectedDate />
     </div>
 </main>
-
-<style>
-    main {
-        min-height: 100vh;
-        background-color: var(--background);
-        padding: 1rem;
-        font-family: 'Roboto', sans-serif;
-    }
-
-    .page-header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 2rem;
-        max-width: 1200px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    h1 {
-        color: var(--textPrimary);
-        font-size: 2rem;
-        font-weight: 500;
-        margin: 0;
-        font-family: 'Roboto', sans-serif;
-    }
-
-    .calendar-wrapper {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 1.5rem;
-        }
-    }
-</style>
