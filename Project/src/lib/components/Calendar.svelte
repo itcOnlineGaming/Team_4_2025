@@ -1,18 +1,16 @@
 <script lang="ts">
-    import { get } from "svelte/store";
-
     export let selectedDate: Date = new Date();
-    export let selectedHour: number = 0;
-    export let selectedDay: number = 0;
 
-    // very simple event shape
+    // Event type with description
     type CalendarEvent = {
         id: number;
         date: string;  // YYYY-MM-DD
         time: string;  // HH:00
         title: string;
+        description: string;
     };
-    export let events: CalendarEvent[] = [];
+    
+    let events: CalendarEvent[] = [];
     
     // Days of the week
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -21,10 +19,6 @@
     const timeSlots: string[] = [];
     for (let hour = 0; hour < 24; hour++) {
         timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    }
-
-    type timeCard = {
-        title: string;
     }
     
     // Get current week dates based on selectedDate
@@ -41,33 +35,9 @@
             const date = new Date(monday);
             date.setDate(monday.getDate() + i);
             weekDates.push(date);
-
         }
         return weekDates;
     }
-
-        let titles: string[][] = Array.from({ length: 24 }, () => Array(7).fill(''));
-
-        function initializeTitles() 
-        {
-            titles = [];
-            for (let i = 0; i < 24; i++) {
-                titles[i] = [];
-                for (let j = 0; j < 7; j++) {
-                    titles[i][j] = '';
-                }
-            }
-        }
-        initializeTitles();
-
-    function getIndexTitle(hour: number, day: number): string {
-        return (titles[hour][day]) ? titles[hour][day] : 'NULL';
-    }
-    function setIndexTitle(hour: number, day: number, title: string) {
-        titles[hour][day] = title;
-        titles = titles.map(row => row.slice());
-    }
-
     
     $: weekDates = getCurrentWeekDates(selectedDate);
     
@@ -101,59 +71,101 @@
         selectedDate = new Date();
     }
 
-    // modal state (kept simple)
-  let showModal = false;
-  let targetDate = '';
-  let targetTime = '';
-  let titleInput = '';
+    // Modal state
+    let showModal = false;
+    let modalMode: 'create' | 'view' = 'create';
+    let targetDate = '';
+    let targetTime = '';
+    let titleInput = '';
+    let descriptionInput = '';
+    let selectedEvent: CalendarEvent | null = null;
 
-  function handleCellClick(e: MouseEvent) {
-    const el = e.currentTarget as HTMLElement;
-    targetDate = el.dataset.date || '';
-    targetTime = el.dataset.time || '';
-    titleInput = '';
-    showModal = true;
-  }
+    function handleCellClick(date: string, time: string) {
+        const existingEvents = eventsFor(date, time);
+        
+        if (existingEvents.length > 0) {
+            // View existing event
+            selectedEvent = existingEvents[0];
+            titleInput = selectedEvent.title;
+            descriptionInput = selectedEvent.description;
+            modalMode = 'view';
+        } else {
+            // Create new event
+            selectedEvent = null;
+            titleInput = '';
+            descriptionInput = '';
+            modalMode = 'create';
+        }
+        
+        targetDate = date;
+        targetTime = time;
+        showModal = true;
+    }
 
-  function closeModal() {
-    showModal = false;
-    titleInput = '';
-  }
+    function closeModal() {
+        showModal = false;
+        titleInput = '';
+        descriptionInput = '';
+        selectedEvent = null;
+    }
 
-  function saveEvent() {
-    const t = titleInput.trim();
-    if (!t) { closeModal(); return; }
-    const ev: CalendarEvent = {
-      id: Date.now(), // simple id
-      date: targetDate,
-      time: targetTime,
-      title: t
-    };
-    // reassign to trigger update
-    events = [...events, ev];
-    try { localStorage.setItem('calendar_events_v1', JSON.stringify(events)); } catch {}
-    closeModal();
-  }
+    function saveEvent() {
+        const t = titleInput.trim();
+        if (!t) { 
+            closeModal(); 
+            return; 
+        }
+        
+        if (modalMode === 'view' && selectedEvent) {
+            // Update existing event
+            events = events.map(e => 
+                e.id === selectedEvent!.id 
+                    ? { ...e, title: t, description: descriptionInput.trim() }
+                    : e
+            );
+        } else {
+            // Create new event
+            const ev: CalendarEvent = {
+                id: Date.now(),
+                date: targetDate,
+                time: targetTime,
+                title: t,
+                description: descriptionInput.trim()
+            };
+            events = [...events, ev];
+        }
+        
+        try { 
+            localStorage.setItem('calendar_events_v2', JSON.stringify(events)); 
+        } catch {}
+        
+        closeModal();
+    }
 
-  function eventsFor(d: string, t: string) {
-    return events.filter(e => e.date === d && e.time === t);
-  }
+    function eventsFor(d: string, t: string) {
+        return events.filter(e => e.date === d && e.time === t);
+    }
 
-  function deleteEvent(id: number) {
-    events = events.filter(e => e.id !== id);
-    try { localStorage.setItem('calendar_events_v1', JSON.stringify(events)); } catch {}
-  }
+    function deleteEvent() {
+        if (selectedEvent) {
+            events = events.filter(e => e.id !== selectedEvent!.id);
+            try { 
+                localStorage.setItem('calendar_events_v2', JSON.stringify(events)); 
+            } catch {}
+            closeModal();
+        }
+    }
 
-  // simple load
-  if (!events.length) {
-    try {
-      const raw = localStorage.getItem('calendar_events_v1');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) events = parsed;
-      }
-    } catch {}
-  }
+    // Load events from localStorage
+    if (!events.length) {
+        try {
+            const raw = localStorage.getItem('calendar_events_v2');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) events = parsed;
+            }
+        } catch {}
+    }
 </script>
 
 <div class="calendar-container">
@@ -198,18 +210,20 @@
                         {timeSlot}
                     </div>
                     {#each weekDates as date, dayIndex}
-                    <button
-                        class="calendar-cell-button"
-                        on:click={() => setIndexTitle(timeIndex, dayIndex, 'no meeting')}
-                        data-time={timeSlot}
-                        data-date={date.toISOString().split('T')[0]}
-                    >
-                        <p>{titles[timeIndex][dayIndex] || ''}</p>
-                        <div
-                        class="calendar-cell"
-                        class:current-hour={isToday(date) && new Date().getHours() === timeIndex}
-                        ></div>
-                    </button>
+                        {@const dateStr = date.toISOString().split('T')[0]}
+                        {@const cellEvents = eventsFor(dateStr, timeSlot)}
+                        <button
+                            class="calendar-cell"
+                            class:current-hour={isToday(date) && new Date().getHours() === timeIndex}
+                            class:has-event={cellEvents.length > 0}
+                            on:click={() => handleCellClick(dateStr, timeSlot)}
+                        >
+                            {#if cellEvents.length > 0}
+                                <div class="event-badge">
+                                    {cellEvents[0].title}
+                                </div>
+                            {/if}
+                        </button>
                     {/each}
                 </div>
             {/each}
@@ -217,8 +231,60 @@
     </div>
 </div>
 
+<!-- Modal -->
+{#if showModal}
+    <div class="modal-overlay" on:click={closeModal}>
+        <div class="modal-content" on:click|stopPropagation>
+            <div class="modal-header">
+                <h2>{modalMode === 'create' ? 'Create Event' : 'Event Details'}</h2>
+                <button class="close-button" on:click={closeModal}>×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="modal-info">
+                    <strong>Date:</strong> {targetDate} at {targetTime}
+                </div>
+                
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input
+                        id="title"
+                        type="text"
+                        bind:value={titleInput}
+                        placeholder="Enter event title"
+                        class="modal-input"
+                    />
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea
+                        id="description"
+                        bind:value={descriptionInput}
+                        placeholder="Enter event description (optional)"
+                        class="modal-textarea"
+                        rows="4"
+                    ></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                {#if modalMode === 'view'}
+                    <button class="delete-button" on:click={deleteEvent}>
+                        Delete
+                    </button>
+                {/if}
+                <button class="cancel-button" on:click={closeModal}>
+                    Cancel
+                </button>
+                <button class="save-button" on:click={saveEvent}>
+                    {modalMode === 'create' ? 'Create' : 'Update'}
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
 <style>
     @import './style.css';
 </style>
-
-
