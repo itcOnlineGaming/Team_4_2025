@@ -11,6 +11,13 @@
     };
     
     let events: CalendarEvent[] = [];
+    // Reactive lookup map keyed by "YYYY-MM-DD|HH:MM" for fast template access and reliable reactivity
+    let eventsIndex: Record<string, CalendarEvent | undefined> = {};
+
+$: eventsIndex = events.reduce((acc: Record<string, CalendarEvent | undefined>, e) => {
+    acc[`${e.date}|${e.time}`] = e;
+    return acc;
+}, {});
     
     // Days of the week
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -82,6 +89,7 @@
 
     function handleCellClick(date: string, time: string) {
         const existingEvents = eventsFor(date, time);
+        console.debug('handleCellClick', { date, time, existingEventsLength: existingEvents.length, existingEvents });
         
         if (existingEvents.length > 0) {
             // View existing event
@@ -111,9 +119,11 @@
 
     function saveEvent() {
         const t = titleInput.trim();
-        if (!t) { 
-            closeModal(); 
-            return; 
+        console.debug('saveEvent called', { t, modalMode, selectedEvent, targetDate, targetTime, eventsBefore: events.length });
+        if (!t) {
+            console.debug('saveEvent aborted: empty title');
+            closeModal();
+            return;
         }
         
         if (modalMode === 'view' && selectedEvent) {
@@ -132,12 +142,31 @@
                 title: t,
                 description: descriptionInput.trim()
             };
+            console.debug('creating event', ev);
             events = [...events, ev];
         }
         
-        try { 
-            localStorage.setItem('calendar_events_v2', JSON.stringify(events)); 
-        } catch {}
+        try {
+            localStorage.setItem('calendar_events_v2', JSON.stringify(events));
+            console.debug('events saved to localStorage', { total: events.length, events });
+            // Immediately re-read persisted events and apply them to ensure UI uses the persisted source of truth
+            try {
+                const rawAfterSave = localStorage.getItem('calendar_events_v2');
+                if (rawAfterSave) {
+                    const parsedAfterSave = JSON.parse(rawAfterSave);
+                    if (Array.isArray(parsedAfterSave)) {
+                        events = parsedAfterSave;
+                        // force a shallow copy so Svelte's reactivity picks up the change
+                        events = [...events];
+                        console.debug('events reloaded from localStorage after save', events.length, events);
+                    }
+                }
+            } catch (err2) {
+                console.debug('failed to reload events after save', err2);
+            }
+        } catch (err) {
+            console.debug('localStorage save failed', err);
+        }
         
         closeModal();
     }
@@ -146,12 +175,26 @@
         return events.filter(e => e.date === d && e.time === t);
     }
 
+$: console.debug('events changed', events.length);
+
     function deleteEvent() {
         if (selectedEvent) {
             events = events.filter(e => e.id !== selectedEvent!.id);
-            try { 
-                localStorage.setItem('calendar_events_v2', JSON.stringify(events)); 
-            } catch {}
+            try {
+                localStorage.setItem('calendar_events_v2', JSON.stringify(events));
+                // Read back persisted events to ensure UI consistency
+                const rawAfterDelete = localStorage.getItem('calendar_events_v2');
+                if (rawAfterDelete) {
+                    const parsedAfterDelete = JSON.parse(rawAfterDelete);
+                    if (Array.isArray(parsedAfterDelete)) {
+                        events = parsedAfterDelete;
+                        events = [...events];
+                        console.debug('events reloaded from localStorage after delete', events.length, events);
+                    }
+                }
+            } catch (err) {
+                console.debug('localStorage save failed on delete', err);
+            }
             closeModal();
         }
     }
@@ -162,7 +205,11 @@
             const raw = localStorage.getItem('calendar_events_v2');
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed)) events = parsed;
+                if (Array.isArray(parsed)) {
+                    events = parsed;
+                    events = [...events];
+                    console.debug('loaded events from localStorage', events.length, events);
+                }
             }
         } catch {}
     }
@@ -211,16 +258,17 @@
                     </div>
                     {#each weekDates as date, dayIndex}
                         {@const dateStr = date.toISOString().split('T')[0]}
-                        {@const cellEvents = eventsFor(dateStr, timeSlot)}
+                        {@const key = `${dateStr}|${timeSlot}`}
                         <button
+                            type="button"
                             class="calendar-cell"
                             class:current-hour={isToday(date) && new Date().getHours() === timeIndex}
-                            class:has-event={cellEvents.length > 0}
+                            class:has-event={!!eventsIndex[key]}
                             on:click={() => handleCellClick(dateStr, timeSlot)}
                         >
-                            {#if cellEvents.length > 0}
+                            {#if eventsIndex[key]}
                                 <div class="event-badge">
-                                    {cellEvents[0].title}
+                                    {eventsIndex[key].title}
                                 </div>
                             {/if}
                         </button>
@@ -233,11 +281,11 @@
 
 <!-- Modal -->
 {#if showModal}
-    <div class="modal-overlay" on:click={closeModal}>
-        <div class="modal-content" on:click|stopPropagation>
-            <div class="modal-header">
+    <div class="modal-overlay" on:click={closeModal} role="button" tabindex="0" on:keydown={(e) => (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') && closeModal()}>
+        <div class="modal-content" on:click|stopPropagation role="dialog" aria-modal="true" tabindex="-1" on:keydown|stopPropagation={(e) => e.key === 'Escape' && closeModal()}>
+                <div class="modal-header">
                 <h2>{modalMode === 'create' ? 'Create Event' : 'Event Details'}</h2>
-                <button class="close-button" on:click={closeModal}>×</button>
+                <button type="button" class="close-button" on:click={closeModal}>×</button>
             </div>
             
             <div class="modal-body">
@@ -270,14 +318,14 @@
             
             <div class="modal-footer">
                 {#if modalMode === 'view'}
-                    <button class="delete-button" on:click={deleteEvent}>
+                    <button type="button" class="delete-button" on:click={deleteEvent}>
                         Delete
                     </button>
                 {/if}
-                <button class="cancel-button" on:click={closeModal}>
+                <button type="button" class="cancel-button" on:click={closeModal}>
                     Cancel
                 </button>
-                <button class="save-button" on:click={saveEvent}>
+                <button type="button" class="save-button" on:click={saveEvent}>
                     {modalMode === 'create' ? 'Create' : 'Update'}
                 </button>
             </div>
@@ -287,4 +335,7 @@
 
 <style>
     @import './style.css';
+    .modal-content {
+        font-family: Arial, Helvetica, sans-serif;
+    }
 </style>
