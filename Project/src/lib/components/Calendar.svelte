@@ -86,6 +86,73 @@ $: eventsIndex = events.reduce((acc: Record<string, CalendarEvent | undefined>, 
     let titleInput = '';
     let descriptionInput = '';
     let selectedEvent: CalendarEvent | null = null;
+    let draggedEvent: CalendarEvent | null = null;
+
+
+    function drag(node: HTMLElement) {
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+        let originalPosition: { left: string; top: string; position: string; width: string } | null = null;
+        let originalRect: DOMRect | null = null;
+
+        const handleMousedown = (e: MouseEvent) => {
+            // ✅ Only start dragging if this cell actually has an event
+            if (!node.classList.contains('has-event')) return;
+
+            isDragging = true;
+            originalRect = node.getBoundingClientRect();
+            node.style.zIndex = '1000';
+            node.style.width = `${originalRect.width}px`; // lock width to cell width
+            originalPosition = {
+                left: node.style.left,
+                top: node.style.top,
+                position: node.style.position,
+                width: node.style.width
+            };
+            offsetX = e.clientX - originalRect.left;
+            offsetY = e.clientY - originalRect.top;
+            node.style.cursor = 'grabbing';
+            node.dispatchEvent(new CustomEvent('drag-started'));
+        };
+
+        const handleMousemove = (e: MouseEvent) => {
+            if (!isDragging) return;
+            node.style.position = 'absolute';
+            node.style.pointerEvents = 'none';
+            node.style.left = `${e.clientX - offsetX}px`;
+            node.style.top = `${e.clientY - offsetY}px`;
+        };
+
+        const handleMouseup = () => {
+            if (isDragging) {
+                node.style.position = originalPosition?.position || '';
+                node.style.left = originalPosition?.left || '';
+                node.style.top = originalPosition?.top || '';
+                node.style.pointerEvents = '';
+                node.style.cursor = 'pointer';
+                node.style.zIndex = '';
+                node.style.width = originalPosition?.width || '';
+
+                node.dispatchEvent(new CustomEvent('drag-ended'));
+            }
+            isDragging = false;
+        };
+
+        node.addEventListener('mousedown', handleMousedown);
+        window.addEventListener('mousemove', handleMousemove);
+        window.addEventListener('mouseup', handleMouseup);
+
+        return {
+            destroy() {
+                node.removeEventListener('mousedown', handleMousedown);
+                window.removeEventListener('mousemove', handleMousemove);
+                window.removeEventListener('mouseup', handleMouseup);
+            }
+        };
+    }
+
+
 
     function handleCellClick(date: string, time: string) {
         const existingEvents = eventsFor(date, time);
@@ -108,6 +175,65 @@ $: eventsIndex = events.reduce((acc: Record<string, CalendarEvent | undefined>, 
         targetDate = date;
         targetTime = time;
         showModal = true;
+    }
+
+    function handleCellDragging(date: string, time: string) {
+        const existingEvents = eventsFor(date, time);
+        console.debug('handleCellDragging', { date, time, existingEventsLength: existingEvents.length, existingEvents });
+
+        if (existingEvents.length > 0)
+        {
+            draggedEvent = existingEvents[0];
+        }
+    }
+
+    function handleCellPlacement(date: string, time: string) {
+        if (!draggedEvent) return;
+
+        // Prevent placing in the same slot
+        if (draggedEvent.date === date && draggedEvent.time === time) {
+            draggedEvent = null;
+            return;
+        }
+
+        // If target slot already has an event, skip
+        const existingEvents = eventsFor(date, time);
+        if (existingEvents.length > 0) {
+            console.debug('Cell already occupied, skipping move');
+            draggedEvent = null;
+            return;
+        }
+
+        // Create an updated version of the event
+        const updatedEvent = {
+            ...draggedEvent,
+            date,
+            time
+        };
+
+        // Remove old event and add updated one
+        events = events
+            .filter(e => e.id !== draggedEvent!.id)
+            .concat(updatedEvent);
+
+        console.debug('Moved event', {
+            id: draggedEvent.id,
+            from: `${draggedEvent.date} ${draggedEvent.time}`,
+            to: `${date} ${time}`
+        });
+
+        // Save to localStorage
+        try {
+            localStorage.setItem('calendar_events_v2', JSON.stringify(events));
+        } catch (err) {
+            console.error('Failed to save moved event:', err);
+        }
+
+        // Force UI refresh
+        events = [...events];
+
+        // Clear drag state
+        draggedEvent = null;
     }
 
     function closeModal() {
@@ -265,6 +391,9 @@ $: console.debug('events changed', events.length);
                             class:current-hour={isToday(date) && new Date().getHours() === timeIndex}
                             class:has-event={!!eventsIndex[key]}
                             on:click={() => handleCellClick(dateStr, timeSlot)}
+                            on:mousedown={() => handleCellDragging(dateStr, timeSlot)}
+                            on:mouseup={() => handleCellPlacement(dateStr, timeSlot)}
+                            use:drag
                         >
                             {#if eventsIndex[key]}
                                 <div class="event-badge">
