@@ -44,13 +44,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: |
-            frontend/package-lock.json
+           Project/package-lock.json
 
 
       # 3) Install project dependencies for the frontend
       #    - Uses npm ci for deterministic, lockfile-based installs.
       - name: Install dependencies
-        working-directory: frontend
+        working-directory: Project
         run: npm ci
 
 
@@ -87,7 +87,7 @@ jobs:
       - name: Start preview server
         working-directory: frontend
         run: |
-          npm run preview -- --host 0.0.0.0 --port 4173 &
+          npm run preview -- --host 0.0.0.0 --port 5173 &
           echo $! > ../preview.pid
 
 
@@ -96,7 +96,7 @@ jobs:
       #    - We probe the TCP port only (no hard-coded base path), so this works
       #      for any app that listens on 4173 regardless of its URL structure.
       - name: Wait for preview to be ready
-        run: npx -y wait-on tcp:127.0.0.1:4173
+        run: npx -y wait-on tcp:127.0.0.1:5173
 
 
       # 9) Run unit/component tests (Vitest), if the project uses Vitest
