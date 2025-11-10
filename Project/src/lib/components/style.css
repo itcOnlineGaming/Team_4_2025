@@ -381,6 +381,24 @@
     background-color: #c62828;
 }
 
+/* Layout for sidebar + main calendar area */
+.calendar-shell {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+/* Ensure calendar takes remaining space when sidebar present */
+.calendar-container {
+    flex: 1 1 auto;
+    min-width: 0; /* allow proper overflow handling */
+}
+
+@media (max-width: 900px) {
+    .calendar-shell { flex-direction: column; }
+    .calendar-container { width: 100%; }
+}
+
 @media (max-width: 768px) 
 {
     .calendar-container 
