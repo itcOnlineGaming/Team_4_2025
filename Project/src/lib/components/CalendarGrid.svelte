@@ -19,20 +19,26 @@
         let offsetY = 0;
 
         const handleMousedown = (e: MouseEvent) => {
-            // ✅ Only drag if this cell has an event
             if (!node.classList.contains('has-event')) return;
 
             isDragging = true;
-
-            // Capture key and mark for UI
             draggedKey = node.getAttribute('data-key');
             const rect = node.getBoundingClientRect();
             offsetX = e.clientX - rect.left;
             offsetY = e.clientY - rect.top;
 
-            // Create the drag ghost (duplicate visual)
+            // ✅ Create ghost copy
             dragGhost = node.cloneNode(true) as HTMLElement;
             dragGhost.classList.add('drag-ghost');
+
+            // ✅ Remove drag-source and any greyed-out styles from the ghost
+            dragGhost.classList.remove('drag-source');
+            const badge = dragGhost.querySelector('.event-badge') as HTMLElement;
+            if (badge) {
+                badge.style.opacity = '1';
+                badge.style.filter = 'none';
+            }
+
             dragGhost.style.position = 'fixed';
             dragGhost.style.left = `${rect.left}px`;
             dragGhost.style.top = `${rect.top}px`;
@@ -40,7 +46,7 @@
             dragGhost.style.height = `${rect.height}px`;
             dragGhost.style.pointerEvents = 'none';
             dragGhost.style.zIndex = '2000';
-            dragGhost.style.opacity = '0.9';
+            dragGhost.style.opacity = '0.95';
 
             document.body.appendChild(dragGhost);
         };
@@ -148,36 +154,3 @@
         {/each}
     </div>
 </div>
-
-<style>
-    .calendar-grid {
-        position: relative;
-    }
-
-    .drag-ghost {
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        pointer-events: none;
-        cursor: grabbing;
-        opacity: 0.9;
-    }
-
-    .calendar-cell.has-event {
-        cursor: grab;
-    }
-    .calendar-cell.has-event:active {
-        cursor: grabbing;
-    }
-
-    .event-badge {
-        transition: opacity 0.1s ease;
-    }
-
-    /* Grey out the original cell during drag */
-    .calendar-cell.drag-source .event-badge {
-        opacity: 0.4;
-        filter: grayscale(100%);
-    }
-</style>

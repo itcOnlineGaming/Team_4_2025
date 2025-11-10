@@ -194,6 +194,11 @@
 .calendar-cell.has-event 
 {
     background-color: #e3f2fd;
+    cursor: grab;
+}
+
+.calendar-cell.has-event:active {
+    cursor: grabbing;
 }
 
 .event-badge 
@@ -204,6 +209,22 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: opacity 0.1s ease;
+}
+
+.drag-ghost {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    pointer-events: none;
+    cursor: grabbing;
+    opacity: 0.9;
+}
+
+.calendar-cell.drag-source .event-badge {
+    opacity: 0.4;
+    filter: grayscale(100%);
 }
 
 @media (max-width: 768px) 
