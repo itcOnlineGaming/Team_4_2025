@@ -1,6 +1,5 @@
 <script lang="ts">
     import CalendarGrid from './CalendarGrid.svelte';
-
     import MonthSidebar from './MonthSidebar.svelte';
     export let selectedDate: Date = new Date();
 
@@ -216,6 +215,26 @@ $: console.debug('events changed', events.length);
             }
         } catch {}
     }
+
+    function handleEventMove(from: {date: string, time: string}, to: {date: string, time: string}) {
+        // Prevent placing in the same slot
+        if (from.date === to.date && from.time === to.time) return;
+        // If target slot already has an event, skip
+        const existingEvents = eventsFor(to.date, to.time);
+        if (existingEvents.length > 0) return;
+        // Find dragged event
+        const draggedEvent = events.find(e => e.date === from.date && e.time === from.time);
+        if (!draggedEvent) return;
+        // Create updated event
+        const updatedEvent = { ...draggedEvent, date: to.date, time: to.time };
+        events = events.filter(e => e.id !== draggedEvent.id).concat(updatedEvent);
+        try {
+            localStorage.setItem('calendar_events_v2', JSON.stringify(events));
+        } catch (err) {
+            console.error('Failed to save moved event:', err);
+        }
+        events = [...events];
+    }
 </script>
 
 
@@ -249,6 +268,7 @@ $: console.debug('events changed', events.length);
             {formatDate}
             {isToday}
             {handleCellClick}
+            onEventMove={handleEventMove}
         />
     </div>
 </div>
