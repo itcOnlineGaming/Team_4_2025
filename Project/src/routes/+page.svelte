@@ -5,7 +5,7 @@
     import { onMount } from 'svelte';
 
     let showConsent = false;
-    let stored : string | null = null;
+    let CalendarConsent : string | null = null;
 
 
     onMount(checkConsent);
@@ -15,9 +15,10 @@
     {
         try 
         {
-            stored = localStorage.getItem('calendar_consent');
+            CalendarConsent = localStorage.getItem('calendar_consent');
             
-            if (stored !== 'true') {
+            if (CalendarConsent !== 'true') 
+            {
                 showConsent = true;
             }
         } 
@@ -29,9 +30,9 @@
         }
     }
 
-    function openConsent() 
+    function redirectCalendar() 
     {
-        if (stored === 'true') 
+        if (CalendarConsent === 'true') 
         {
             goto('/calendar');
             return;
@@ -50,7 +51,10 @@
         {
             localStorage.setItem('calendar_consent', 'true'); 
         } 
-        catch {}
+        catch 
+        {
+            console.warn('Could not store consent in localStorage');
+        }
         showConsent = false;
         goto('/calendar');
     }
@@ -68,7 +72,7 @@
     </ul>
 
     <div class="intro-actions">
-        <button type="button" class="primary-button" on:click={openConsent}>Open Calendar</button>
+        <button type="button" class="primary-button" on:click={redirectCalendar}>Open Calendar</button>
     </div>
 </main>
 
