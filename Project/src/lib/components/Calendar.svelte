@@ -1,4 +1,6 @@
 <script lang="ts">
+    import CalendarGrid from './CalendarGrid.svelte';
+    import MonthSidebar from './MonthSidebar.svelte';
     export let selectedDate: Date = new Date();
 
     // Event type with description
@@ -86,73 +88,6 @@ $: eventsIndex = events.reduce((acc: Record<string, CalendarEvent | undefined>, 
     let titleInput = '';
     let descriptionInput = '';
     let selectedEvent: CalendarEvent | null = null;
-    let draggedEvent: CalendarEvent | null = null;
-
-
-    function drag(node: HTMLElement) {
-        let isDragging = false;
-        let offsetX = 0;
-        let offsetY = 0;
-        let originalPosition: { left: string; top: string; position: string; width: string } | null = null;
-        let originalRect: DOMRect | null = null;
-
-        const handleMousedown = (e: MouseEvent) => {
-            // ✅ Only start dragging if this cell actually has an event
-            if (!node.classList.contains('has-event')) return;
-
-            isDragging = true;
-            originalRect = node.getBoundingClientRect();
-            node.style.zIndex = '1000';
-            node.style.width = `${originalRect.width}px`; // lock width to cell width
-            originalPosition = {
-                left: node.style.left,
-                top: node.style.top,
-                position: node.style.position,
-                width: node.style.width
-            };
-            offsetX = e.clientX - originalRect.left;
-            offsetY = e.clientY - originalRect.top;
-            node.style.cursor = 'grabbing';
-            node.dispatchEvent(new CustomEvent('drag-started'));
-        };
-
-        const handleMousemove = (e: MouseEvent) => {
-            if (!isDragging) return;
-            node.style.position = 'absolute';
-            node.style.pointerEvents = 'none';
-            node.style.left = `${e.clientX - offsetX}px`;
-            node.style.top = `${e.clientY - offsetY}px`;
-        };
-
-        const handleMouseup = () => {
-            if (isDragging) {
-                node.style.position = originalPosition?.position || '';
-                node.style.left = originalPosition?.left || '';
-                node.style.top = originalPosition?.top || '';
-                node.style.pointerEvents = '';
-                node.style.cursor = 'pointer';
-                node.style.zIndex = '';
-                node.style.width = originalPosition?.width || '';
-
-                node.dispatchEvent(new CustomEvent('drag-ended'));
-            }
-            isDragging = false;
-        };
-
-        node.addEventListener('mousedown', handleMousedown);
-        window.addEventListener('mousemove', handleMousemove);
-        window.addEventListener('mouseup', handleMouseup);
-
-        return {
-            destroy() {
-                node.removeEventListener('mousedown', handleMousedown);
-                window.removeEventListener('mousemove', handleMousemove);
-                window.removeEventListener('mouseup', handleMouseup);
-            }
-        };
-    }
-
-
 
     function handleCellClick(date: string, time: string) {
         const existingEvents = eventsFor(date, time);
@@ -175,65 +110,6 @@ $: eventsIndex = events.reduce((acc: Record<string, CalendarEvent | undefined>, 
         targetDate = date;
         targetTime = time;
         showModal = true;
-    }
-
-    function handleCellDragging(date: string, time: string) {
-        const existingEvents = eventsFor(date, time);
-        console.debug('handleCellDragging', { date, time, existingEventsLength: existingEvents.length, existingEvents });
-
-        if (existingEvents.length > 0)
-        {
-            draggedEvent = existingEvents[0];
-        }
-    }
-
-    function handleCellPlacement(date: string, time: string) {
-        if (!draggedEvent) return;
-
-        // Prevent placing in the same slot
-        if (draggedEvent.date === date && draggedEvent.time === time) {
-            draggedEvent = null;
-            return;
-        }
-
-        // If target slot already has an event, skip
-        const existingEvents = eventsFor(date, time);
-        if (existingEvents.length > 0) {
-            console.debug('Cell already occupied, skipping move');
-            draggedEvent = null;
-            return;
-        }
-
-        // Create an updated version of the event
-        const updatedEvent = {
-            ...draggedEvent,
-            date,
-            time
-        };
-
-        // Remove old event and add updated one
-        events = events
-            .filter(e => e.id !== draggedEvent!.id)
-            .concat(updatedEvent);
-
-        console.debug('Moved event', {
-            id: draggedEvent.id,
-            from: `${draggedEvent.date} ${draggedEvent.time}`,
-            to: `${date} ${time}`
-        });
-
-        // Save to localStorage
-        try {
-            localStorage.setItem('calendar_events_v2', JSON.stringify(events));
-        } catch (err) {
-            console.error('Failed to save moved event:', err);
-        }
-
-        // Force UI refresh
-        events = [...events];
-
-        // Clear drag state
-        draggedEvent = null;
     }
 
     function closeModal() {
@@ -339,72 +215,61 @@ $: console.debug('events changed', events.length);
             }
         } catch {}
     }
+
+    function handleEventMove(from: {date: string, time: string}, to: {date: string, time: string}) {
+        // Prevent placing in the same slot
+        if (from.date === to.date && from.time === to.time) return;
+        // If target slot already has an event, skip
+        const existingEvents = eventsFor(to.date, to.time);
+        if (existingEvents.length > 0) return;
+        // Find dragged event
+        const draggedEvent = events.find(e => e.date === from.date && e.time === from.time);
+        if (!draggedEvent) return;
+        // Create updated event
+        const updatedEvent = { ...draggedEvent, date: to.date, time: to.time };
+        events = events.filter(e => e.id !== draggedEvent.id).concat(updatedEvent);
+        try {
+            localStorage.setItem('calendar_events_v2', JSON.stringify(events));
+        } catch (err) {
+            console.error('Failed to save moved event:', err);
+        }
+        events = [...events];
+    }
 </script>
 
-<div class="calendar-container">
-    <!-- Calendar Header -->
-    <div class="calendar-header">
-        <div class="navigation">
-            <button class="nav-button" on:click={goToPreviousWeek}>
-                ‹
-            </button>
-            <button class="today-button" on:click={goToToday}>
-                Today
-            </button>
-            <button class="nav-button" on:click={goToNextWeek}>
-                ›
-            </button>
-        </div>
-        <div class="week-display">
-            {formatFullDate(weekDates[0])} - {formatFullDate(weekDates[6])}
-        </div>
-    </div>
-    
-    <!-- Calendar Grid -->
-    <div class="calendar-grid">
-        <!-- Header row with time column and days -->
-        <div class="grid-header">
-            <div class="time-column-header"></div>
-            {#each weekDates as date, index}
-                <div class="day-header" class:today={isToday(date)}>
-                    <div class="day-name">{daysOfWeek[index]}</div>
-                    <div class="day-number" class:today-number={isToday(date)}>
-                        {formatDate(date)}
-                    </div>
-                </div>
-            {/each}
+
+        <div class="calendar-shell">
+    <MonthSidebar bind:selectedDate />
+    <div class="calendar-container">
+        <!-- Calendar Header -->
+        <div class="calendar-header">
+            <div class="navigation">
+                <button class="nav-button" on:click={goToPreviousWeek}>
+                    ‹
+                </button>
+                <button class="today-button" on:click={goToToday}>
+                    Today
+                </button>
+                <button class="nav-button" on:click={goToNextWeek}>
+                    ›
+                </button>
+            </div>
+            <div class="week-display">
+                {formatFullDate(weekDates[0])} - {formatFullDate(weekDates[6])}
+            </div>
         </div>
         
-        <!-- Time slots and grid -->
-        <div class="grid-body">
-            {#each timeSlots as timeSlot, timeIndex}
-                <div class="time-row">
-                    <div class="time-slot">
-                        {timeSlot}
-                    </div>
-                    {#each weekDates as date, dayIndex}
-                        {@const dateStr = date.toISOString().split('T')[0]}
-                        {@const key = `${dateStr}|${timeSlot}`}
-                        <button
-                            type="button"
-                            class="calendar-cell"
-                            class:current-hour={isToday(date) && new Date().getHours() === timeIndex}
-                            class:has-event={!!eventsIndex[key]}
-                            on:click={() => handleCellClick(dateStr, timeSlot)}
-                            on:mousedown={() => handleCellDragging(dateStr, timeSlot)}
-                            on:mouseup={() => handleCellPlacement(dateStr, timeSlot)}
-                            use:drag
-                        >
-                            {#if eventsIndex[key]}
-                                <div class="event-badge">
-                                    {eventsIndex[key].title}
-                                </div>
-                            {/if}
-                        </button>
-                    {/each}
-                </div>
-            {/each}
-        </div>
+        <!-- Calendar Grid -->
+        <CalendarGrid
+            {weekDates}
+            {timeSlots}
+            {daysOfWeek}
+            {eventsIndex}
+            {formatDate}
+            {isToday}
+            {handleCellClick}
+            onEventMove={handleEventMove}
+        />
     </div>
 </div>
 
@@ -462,9 +327,3 @@ $: console.debug('events changed', events.length);
     </div>
 {/if}
 
-<style>
-    @import './style.css';
-    .modal-content {
-        font-family: Arial, Helvetica, sans-serif;
-    }
-</style>
