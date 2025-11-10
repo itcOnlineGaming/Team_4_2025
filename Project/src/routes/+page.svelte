@@ -5,38 +5,52 @@
     import { onMount } from 'svelte';
 
     let showConsent = false;
+    let stored : string | null = null;
+
+
+    onMount(checkConsent);
 
     // Check stored consent on load — if not present, show modal automatically
-    onMount(() => {
-        try {
-            const stored = localStorage.getItem('calendar_consent');
+    function checkConsent()
+    {
+        try 
+        {
+            stored = localStorage.getItem('calendar_consent');
+            
             if (stored !== 'true') {
                 showConsent = true;
             }
-        } catch (err) {
-            // If localStorage isn't available, still show consent modal
+        } 
+        // If localStorage isn't available, still show consent modal
+        catch (err) 
+        {
+            
             showConsent = true;
         }
-    });
+    }
 
-    function openConsent() {
-        // If already consented, go straight to calendar
-        try {
-            const stored = localStorage.getItem('calendar_consent');
-            if (stored === 'true') {
-                goto('/calendar');
-                return;
-            }
-        } catch {}
+    function openConsent() 
+    {
+        if (stored === 'true') 
+        {
+            goto('/calendar');
+            return;
+        }
+
         showConsent = true;
     }
 
-    function cancelConsent() {
+    function cancelConsent() 
+    {
         showConsent = false;
     }
 
     function acceptConsent() {
-        try { localStorage.setItem('calendar_consent', 'true'); } catch {}
+        try 
+        {
+            localStorage.setItem('calendar_consent', 'true'); 
+        } 
+        catch {}
         showConsent = false;
         goto('/calendar');
     }
@@ -59,84 +73,7 @@
 </main>
 
 <style>
-    .intro-container {
-        max-width: 800px;
-        margin: 3rem auto;
-        padding: 1.5rem;
-       font-family: Arial, Helvetica, sans-serif;
-    }
-    .intro-actions { display: flex; gap: 1rem; margin-top: 1rem; }
-    .primary-button {
-        display: inline-block;
-        padding: 0.75rem 1.25rem;
-        border-radius: 6px;
-        text-decoration: none;
-        color: white;
-        
-    }
-    .primary-button { background: #1976d2; }
-    /* Modal styles copied from shared component stylesheet so consent displays as a modal */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-
-    .modal-content {
-        background: white;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 500px;
-        max-height: 90vh;
-        overflow: auto;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        font-family: Arial, Helvetica, sans-serif;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1.5rem;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .modal-header h2 { margin: 0; font-size: 1.25rem; }
-
-    .modal-body { padding: 1.5rem; }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.75rem;
-        padding: 1.5rem;
-        border-top: 1px solid #e0e0e0;
-    }
-
-    .cancel-button {
-        padding: 0.625rem 1.25rem;
-        border: 1px solid #dadce0;
-        border-radius: 4px;
-        background: transparent;
-        color: #1976d2;
-        cursor: pointer;
-    }
-
-    .save-button {
-        padding: 0.625rem 1.25rem;
-        border-radius: 4px;
-        background-color: #1976d2;
-        color: white;
-        border: none;
-        cursor: pointer;
-    }
+    @import './styles/landingPage.css';
 </style>
 
 {#if showConsent}
