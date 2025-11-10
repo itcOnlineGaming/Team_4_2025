@@ -1,4 +1,6 @@
 <script lang="ts">
+    import CalendarGrid from './CalendarGrid.svelte';
+    import MonthSidebar from './MonthSidebar.svelte';
     export let selectedDate: Date = new Date();
 
     // Event type with description
@@ -213,69 +215,61 @@ $: console.debug('events changed', events.length);
             }
         } catch {}
     }
+
+    function handleEventMove(from: {date: string, time: string}, to: {date: string, time: string}) {
+        // Prevent placing in the same slot
+        if (from.date === to.date && from.time === to.time) return;
+        // If target slot already has an event, skip
+        const existingEvents = eventsFor(to.date, to.time);
+        if (existingEvents.length > 0) return;
+        // Find dragged event
+        const draggedEvent = events.find(e => e.date === from.date && e.time === from.time);
+        if (!draggedEvent) return;
+        // Create updated event
+        const updatedEvent = { ...draggedEvent, date: to.date, time: to.time };
+        events = events.filter(e => e.id !== draggedEvent.id).concat(updatedEvent);
+        try {
+            localStorage.setItem('calendar_events_v2', JSON.stringify(events));
+        } catch (err) {
+            console.error('Failed to save moved event:', err);
+        }
+        events = [...events];
+    }
 </script>
 
-<div class="calendar-container">
-    <!-- Calendar Header -->
-    <div class="calendar-header">
-        <div class="navigation">
-            <button class="nav-button" on:click={goToPreviousWeek}>
-                ‹
-            </button>
-            <button class="today-button" on:click={goToToday}>
-                Today
-            </button>
-            <button class="nav-button" on:click={goToNextWeek}>
-                ›
-            </button>
-        </div>
-        <div class="week-display">
-            {formatFullDate(weekDates[0])} - {formatFullDate(weekDates[6])}
-        </div>
-    </div>
-    
-    <!-- Calendar Grid -->
-    <div class="calendar-grid">
-        <!-- Header row with time column and days -->
-        <div class="grid-header">
-            <div class="time-column-header"></div>
-            {#each weekDates as date, index}
-                <div class="day-header" class:today={isToday(date)}>
-                    <div class="day-name">{daysOfWeek[index]}</div>
-                    <div class="day-number" class:today-number={isToday(date)}>
-                        {formatDate(date)}
-                    </div>
-                </div>
-            {/each}
+
+        <div class="calendar-shell">
+    <MonthSidebar bind:selectedDate />
+    <div class="calendar-container">
+        <!-- Calendar Header -->
+        <div class="calendar-header">
+            <div class="navigation">
+                <button class="nav-button" on:click={goToPreviousWeek}>
+                    ‹
+                </button>
+                <button class="today-button" on:click={goToToday}>
+                    Today
+                </button>
+                <button class="nav-button" on:click={goToNextWeek}>
+                    ›
+                </button>
+            </div>
+            <div class="week-display">
+                {formatFullDate(weekDates[0])} - {formatFullDate(weekDates[6])}
+            </div>
         </div>
         
-        <!-- Time slots and grid -->
-        <div class="grid-body">
-            {#each timeSlots as timeSlot, timeIndex}
-                <div class="time-row">
-                    <div class="time-slot">
-                        {timeSlot}
-                    </div>
-                    {#each weekDates as date, dayIndex}
-                        {@const dateStr = date.toISOString().split('T')[0]}
-                        {@const key = `${dateStr}|${timeSlot}`}
-                        <button
-                            type="button"
-                            class="calendar-cell"
-                            class:current-hour={isToday(date) && new Date().getHours() === timeIndex}
-                            class:has-event={!!eventsIndex[key]}
-                            on:click={() => handleCellClick(dateStr, timeSlot)}
-                        >
-                            {#if eventsIndex[key]}
-                                <div class="event-badge">
-                                    {eventsIndex[key].title}
-                                </div>
-                            {/if}
-                        </button>
-                    {/each}
-                </div>
-            {/each}
-        </div>
+        <!-- Calendar Grid -->
+        <CalendarGrid
+            {weekDates}
+            {timeSlots}
+            {daysOfWeek}
+            {eventsIndex}
+            {formatDate}
+            {isToday}
+            {handleCellClick}
+            onEventMove={handleEventMove}
+        />
     </div>
 </div>
 
@@ -333,9 +327,3 @@ $: console.debug('events changed', events.length);
     </div>
 {/if}
 
-<style>
-    @import './style.css';
-    .modal-content {
-        font-family: Arial, Helvetica, sans-serif;
-    }
-</style>
