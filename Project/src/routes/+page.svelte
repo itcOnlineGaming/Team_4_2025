@@ -60,6 +60,10 @@
     }
 </script>
 
+<svelte:head>
+    <title>Task Calendar</title>
+</svelte:head>
+
 <main class="intro-container">
     <h1>Welcome to the Task Calendar</h1>
 
