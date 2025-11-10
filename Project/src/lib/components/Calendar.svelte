@@ -1,6 +1,7 @@
 <script lang="ts">
     import CalendarGrid from './CalendarGrid.svelte';
     import MonthSidebar from './MonthSidebar.svelte';
+    import EventModal from "./EventModal.svelte";
     export let selectedDate: Date = new Date();
 
     // Event type with description
@@ -148,27 +149,9 @@ $: eventsIndex = events.reduce((acc: Record<string, CalendarEvent | undefined>, 
             events = [...events, ev];
         }
         
-        try {
-            localStorage.setItem('calendar_events_v2', JSON.stringify(events));
-            console.debug('events saved to localStorage', { total: events.length, events });
-            // Immediately re-read persisted events and apply them to ensure UI uses the persisted source of truth
-            try {
-                const rawAfterSave = localStorage.getItem('calendar_events_v2');
-                if (rawAfterSave) {
-                    const parsedAfterSave = JSON.parse(rawAfterSave);
-                    if (Array.isArray(parsedAfterSave)) {
-                        events = parsedAfterSave;
-                        // force a shallow copy so Svelte's reactivity picks up the change
-                        events = [...events];
-                        console.debug('events reloaded from localStorage after save', events.length, events);
-                    }
-                }
-            } catch (err2) {
-                console.debug('failed to reload events after save', err2);
-            }
-        } catch (err) {
-            console.debug('localStorage save failed', err);
-        }
+        try { 
+            localStorage.setItem('calendar_events_v2', JSON.stringify(events)); 
+        } catch {}
         
         closeModal();
     }
@@ -180,23 +163,11 @@ $: eventsIndex = events.reduce((acc: Record<string, CalendarEvent | undefined>, 
 $: console.debug('events changed', events.length);
 
     function deleteEvent() {
-        if (selectedEvent) {
+         if (selectedEvent) {
             events = events.filter(e => e.id !== selectedEvent!.id);
-            try {
-                localStorage.setItem('calendar_events_v2', JSON.stringify(events));
-                // Read back persisted events to ensure UI consistency
-                const rawAfterDelete = localStorage.getItem('calendar_events_v2');
-                if (rawAfterDelete) {
-                    const parsedAfterDelete = JSON.parse(rawAfterDelete);
-                    if (Array.isArray(parsedAfterDelete)) {
-                        events = parsedAfterDelete;
-                        events = [...events];
-                        console.debug('events reloaded from localStorage after delete', events.length, events);
-                    }
-                }
-            } catch (err) {
-                console.debug('localStorage save failed on delete', err);
-            }
+            try { 
+                localStorage.setItem('calendar_events_v2', JSON.stringify(events)); 
+            } catch {}
             closeModal();
         }
     }
@@ -207,11 +178,7 @@ $: console.debug('events changed', events.length);
             const raw = localStorage.getItem('calendar_events_v2');
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (Array.isArray(parsed)) {
-                    events = parsed;
-                    events = [...events];
-                    console.debug('loaded events from localStorage', events.length, events);
-                }
+                if (Array.isArray(parsed)) events = parsed;
             }
         } catch {}
     }
@@ -273,57 +240,15 @@ $: console.debug('events changed', events.length);
     </div>
 </div>
 
-<!-- Modal -->
-{#if showModal}
-    <div class="modal-overlay" on:click={closeModal} role="button" tabindex="0" on:keydown={(e) => (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') && closeModal()}>
-        <div class="modal-content" on:click|stopPropagation role="dialog" aria-modal="true" tabindex="-1" on:keydown|stopPropagation={(e) => e.key === 'Escape' && closeModal()}>
-                <div class="modal-header">
-                <h2>{modalMode === 'create' ? 'Create Event' : 'Event Details'}</h2>
-                <button type="button" class="close-button" on:click={closeModal}>×</button>
-            </div>
-            
-            <div class="modal-body">
-                <div class="modal-info">
-                    <strong>Date:</strong> {targetDate} at {targetTime}
-                </div>
-                
-                <div class="form-group">
-                    <label for="title">Title</label>
-                    <input
-                        id="title"
-                        type="text"
-                        bind:value={titleInput}
-                        placeholder="Enter event title"
-                        class="modal-input"
-                    />
-                </div>
-                
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea
-                        id="description"
-                        bind:value={descriptionInput}
-                        placeholder="Enter event description (optional)"
-                        class="modal-textarea"
-                        rows="4"
-                    ></textarea>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                {#if modalMode === 'view'}
-                    <button type="button" class="delete-button" on:click={deleteEvent}>
-                        Delete
-                    </button>
-                {/if}
-                <button type="button" class="cancel-button" on:click={closeModal}>
-                    Cancel
-                </button>
-                <button type="button" class="save-button" on:click={saveEvent}>
-                    {modalMode === 'create' ? 'Create' : 'Update'}
-                </button>
-            </div>
-        </div>
-    </div>
-{/if}
-
+<!-- Modal Stuff-->
+<EventModal 
+    bind:showModal
+    bind:modalMode
+    bind:targetDate
+    bind:targetTime
+    bind:titleInput
+    bind:descriptionInput
+    onClose={closeModal}
+    onSave={saveEvent}
+    onDelete={deleteEvent}
+/>
