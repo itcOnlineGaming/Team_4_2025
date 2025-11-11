@@ -69,10 +69,10 @@
     <h1>Welcome to the Task Calendar</h1>
 
     <p>
-    This small calendar app was developed as part of a 4th-year joint project on 
-    <strong>self-regulated learning</strong>. It is designed to help users plan, 
-    organize, and reflect on their weekly activities by assigning tasks throughout 
-    the week and tracking progress over time. The goal is to support better time 
+    This small calendar app was developed as part of a 4th-year joint project on
+    <strong>self-regulated learning</strong>. It is designed to help users plan,
+    organize, and reflect on their weekly activities by assigning tasks throughout
+    the week and tracking progress over time. The goal is to support better time
     management, goal setting, and personal accountability
     </p>
 
