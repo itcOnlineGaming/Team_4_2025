@@ -3,6 +3,7 @@
     // Adds a consent modal before navigating to the calendar.
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
+    import { base } from '$app/paths'
 
     let showConsent = false;
     let CalendarConsent : string | null = null;
@@ -34,7 +35,6 @@
     {
         if (CalendarConsent === 'true') 
         {
-            goto('/calendar');
             return;
         }
 
