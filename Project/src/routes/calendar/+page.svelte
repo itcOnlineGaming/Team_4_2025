@@ -2,6 +2,7 @@
     import { onMount } from 'svelte';
     import { theme } from '../../lib/theme';
     import Calendar from '$lib/components/Calendar.svelte';
+    import FeedBackButton from '$lib/components/FeedBackButton.svelte';
 
     let selectedDate = new Date();
 
@@ -20,6 +21,7 @@
     <div class="calendar-wrapper">
         <Calendar bind:selectedDate />
     </div>
+    <FeedBackButton formUrl="https://docs.google.com/forms/d/e/1FAIpQLSdZ-SvMCCUtNef0xh4V4pEj-rCvK7VwQjV50e05OuxgLJeNHQ/viewform?usp=dialog" />
 </main>
 
 <style>

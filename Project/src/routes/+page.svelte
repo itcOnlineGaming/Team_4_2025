@@ -67,13 +67,24 @@
 <main class="intro-container">
     <h1>Welcome to the Task Calendar</h1>
 
-    <p>This small calendar app lets you create and manage hourly events for the current week.</p>
+    <p>
+    This small calendar app was developed as part of a 4th-year joint project on 
+    <strong>self-regulated learning</strong>. It is designed to help users plan, 
+    organize, and reflect on their weekly activities by assigning tasks throughout 
+    the week and tracking progress over time. The goal is to support better time 
+    management, goal setting, and personal accountability
+    </p>
 
     <h2>Quick guide</h2>
-    <ul>
-        <li>Click anyhour slot to open the event modal.</li>
-        <li>Enter a <strong>Title</strong> (required) and an optional description, then click <em>Create</em>.</li>
-    </ul>
+<ul>
+    <li>Click any hourly slot in the weekly view to open the event modal.</li>
+    <li>Enter a <strong>Title</strong> (required) and an optional <em>Description</em> to record what you plan to do during that time.</li>
+    <li>Your tasks and notes are saved automatically in your browser using local storage. Be advised: no data leaves your device.</li>
+    <li>Click an existing event to view or edit its details, or delete it if it’s no longer needed.</li>
+    <li>Use the arrow buttons or the month sidebar to move between weeks and select specific dates.</li>
+    <li>Drag and drop events between time slots to reorganize your schedule and adapt your weekly plan.</li>
+    <li> Once you have completed a test of the calendar, please provide your feedback via the feedback link</li>
+</ul>
 
     <div class="intro-actions">
         <button type="button" class="primary-button" on:click={redirectCalendar}>Open Calendar</button>

@@ -256,3 +256,16 @@
         font-size: 1rem;
     }
 }
+
+/* Layout wrapper that places the sidebar beside the main calendar */
+.calendar-shell {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.calendar-shell .calendar-container {
+    flex: 1 1 auto;
+}
