@@ -50,7 +50,9 @@
         <!-- Render all tasks for current week -->
         {#each currentWeekTasks as task (task.id)}
             <MajorItem 
+                id={task.id}
                 title={task.title}
+                description={task.description}
                 color={task.color}
                 startDay={task.startDay}
                 endDay={task.endDay}

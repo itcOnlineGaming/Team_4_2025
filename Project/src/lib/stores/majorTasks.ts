@@ -3,16 +3,63 @@ import { writable } from 'svelte/store';
 export interface MajorTask {
   id: string;
   title: string;
+  description: string;
   color: string;
   startDay: number; // 1-7 (Mon-Sun)
   endDay: number;   // 1-7 (Mon-Sun)
   weekStart: string; // ISO date string for Monday of the week
 }
 
-export const majorTasks = writable<MajorTask[]>([]);
+// LocalStorage keys
+const MAJOR_TASKS_KEY = 'major_tasks';
+const TASK_COUNTER_KEY = 'task_counter';
+
+// LocalStorage helper functions
+function saveMajorTasks(tasks: MajorTask[]): void {
+  try {
+    localStorage.setItem(MAJOR_TASKS_KEY, JSON.stringify(tasks));
+  } catch (error) {
+    console.warn('Failed to save major tasks to localStorage:', error);
+  }
+}
+
+function loadMajorTasks(): MajorTask[] {
+  try {
+    const saved = localStorage.getItem(MAJOR_TASKS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch (error) {
+    console.warn('Failed to load major tasks from localStorage:', error);
+    return [];
+  }
+}
+
+function saveTaskCounter(counter: number): void {
+  try {
+    localStorage.setItem(TASK_COUNTER_KEY, counter.toString());
+  } catch (error) {
+    console.warn('Failed to save task counter to localStorage:', error);
+  }
+}
+
+function loadTaskCounter(): number {
+  try {
+    const saved = localStorage.getItem(TASK_COUNTER_KEY);
+    return saved ? parseInt(saved, 10) : 1;
+  } catch (error) {
+    console.warn('Failed to load task counter from localStorage:', error);
+    return 1;
+  }
+}
+
+// Initialize stores with data from localStorage
+export const majorTasks = writable<MajorTask[]>(loadMajorTasks());
 
 // Global task counter that persists across weeks
-export const taskCounter = writable<number>(1);
+export const taskCounter = writable<number>(loadTaskCounter());
+
+// Auto-save to localStorage when stores change
+majorTasks.subscribe(saveMajorTasks);
+taskCounter.subscribe(saveTaskCounter);
 
 // Helper function to get Monday of current week
 export function getWeekStart(date: Date = new Date()): string {
@@ -39,9 +86,15 @@ export function createNewTask(weekStart: string): MajorTask {
   return {
     id,
     title: `Sample Task #${id}`,
+    description: `Task description for Sample Task #${id}`,
     color: 'red',
     startDay: 1, // Monday
     endDay: 3,   // Wednesday
     weekStart
   };
+}
+
+// Helper function to delete a task
+export function deleteTask(taskId: string): void {
+  majorTasks.update(tasks => tasks.filter(task => task.id !== taskId));
 }
