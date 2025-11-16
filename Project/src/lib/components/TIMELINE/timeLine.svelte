@@ -21,9 +21,17 @@
         showModal = true;
     }
     
-    function handleCreateTask() {
+    function handleCreateTask(event: CustomEvent) {
         if (currentWeekStart) {
-            const newTask = createNewTask(currentWeekStart);
+            const taskData = event.detail;
+            const newTask = createNewTask(
+                currentWeekStart,
+                taskData.title,
+                taskData.description,
+                taskData.color,
+                taskData.startDay,
+                taskData.endDay
+            );
             majorTasks.update(tasks => [...tasks, newTask]);
         }
         showModal = false;

@@ -81,15 +81,24 @@ export function generateTaskId(): string {
 }
 
 // Helper function to create a new task
-export function createNewTask(weekStart: string): MajorTask {
+export function createNewTask(
+  weekStart: string,
+  title?: string,
+  description?: string,
+  color?: string,
+  startDay?: number,
+  endDay?: number
+): MajorTask {
   const id = generateTaskId();
+  const finalTitle = title ? `${title} #${id}` : `Sample Task #${id}`;
+  
   return {
     id,
-    title: `Sample Task #${id}`,
-    description: `Task description for Sample Task #${id}`,
-    color: 'red',
-    startDay: 1, // Monday
-    endDay: 3,   // Wednesday
+    title: finalTitle,
+    description: description || `Task description for ${finalTitle}`,
+    color: color || 'red',
+    startDay: startDay || 1, // Monday
+    endDay: endDay || 3,     // Wednesday
     weekStart
   };
 }
