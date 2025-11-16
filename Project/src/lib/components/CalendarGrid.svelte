@@ -9,6 +9,8 @@
     export let isToday: (date: Date) => boolean;
     export let onEventMove: (from: {date: string, time: string}, to: {date: string, time: string}) => void;
 
+    import TimeLine from './TIMELINE/timeLine.svelte';
+
     let currentHour = new Date().getHours();
     let draggedKey: string | null = null;
     let dragGhost: HTMLElement | null = null;
@@ -123,6 +125,8 @@
             </div>
         {/each}
     </div>
+
+    <TimeLine />
 
     <div class="grid-body">
         {#each timeSlots as timeSlot, timeIndex}
