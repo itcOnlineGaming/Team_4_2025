@@ -126,7 +126,7 @@
         {/each}
     </div>
 
-    <TimeLine />
+    <TimeLine {weekDates} />
 
     <div class="grid-body">
         {#each timeSlots as timeSlot, timeIndex}
