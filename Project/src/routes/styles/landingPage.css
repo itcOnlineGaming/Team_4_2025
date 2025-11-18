@@ -61,18 +61,18 @@
 
     .cancel-button {
         padding: 0.625rem 1.25rem;
-        border: 1px solid #dadce0;
+        border: 1px solid #0000;
+        background-color: indianred;
         border-radius: 4px;
-        background: transparent;
-        color: #1976d2;
+        color: white;
         cursor: pointer;
     }
 
     .save-button {
         padding: 0.625rem 1.25rem;
         border-radius: 4px;
-        background-color: #1976d2;
+        background-color: #8c62cf;
         color: white;
-        border: none;
+        border: 1px solid #0000;
         cursor: pointer;
     }
