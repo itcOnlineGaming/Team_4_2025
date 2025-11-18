@@ -103,8 +103,12 @@
                 <h2>Consent required</h2>
             </div>
             <div class="modal-body">
-                <p>By using this calendar you agree that events will be stored locally in your browser (localStorage). No data will be sent to a server.</p>
-                <p>Do you consent to local storage of your events?</p>
+                <p>
+                    Welcome! Before starting, please confirm that you are comfortable using this
+                    app to organise and reflect on your weekly tasks and activities.
+                       </p>
+
+                    <p>Do you consent to continue?</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="cancel-button" on:click={cancelConsent}>No</button>
