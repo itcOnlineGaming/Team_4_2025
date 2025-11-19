@@ -1,4 +1,3 @@
-
 import { writable } from 'svelte/store';
 
 export interface Subtask {
@@ -9,6 +8,7 @@ export interface Subtask {
     title: string;
     description: string;
     status: 'pending' | 'completed' | 'cancelled';
+    completedOnDate?: string; // Track which date it was completed on
 }
 
 // LocalStorage keys

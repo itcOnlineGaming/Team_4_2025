@@ -14,7 +14,8 @@
         getSubtaskDuration
     } from '../stores/subtasks';
     import { majorTasks, createNewTask, getWeekStart } from '../stores/majorTasks';
-    import { addTimeToDate } from '../stores/dailyActivity';
+    import { addTimeToDate, repopulateFromCompletedTasks, dailyActivity } from '../stores/dailyActivity';
+    import { onMount } from 'svelte';
 
     let eventsIndex: Record<string, Subtask> = {};
     let showModal = false;
@@ -193,11 +194,30 @@
             const newStartMinutes = timeToMinutes(to.time);
             const newEndMinutes = newStartMinutes + durationMinutes;
 
-            updateSubtask(event.id, {
-                date: to.date,
-                startTime: to.time,
-                endTime: minutesToTime(newEndMinutes)
-            });
+            // If task is completed and moving to a different date, update daily activity
+            if (event.status === 'completed' && from.date !== to.date) {
+                const duration = getSubtaskDuration(event);
+                const completedOnDate = event.completedOnDate || from.date;
+
+                // Remove from old date
+                addTimeToDate(completedOnDate, -duration);
+                // Add to new date
+                addTimeToDate(to.date, duration);
+
+                // Update the completedOnDate to the new date
+                updateSubtask(event.id, {
+                    date: to.date,
+                    startTime: to.time,
+                    endTime: minutesToTime(newEndMinutes),
+                    completedOnDate: to.date
+                });
+            } else {
+                updateSubtask(event.id, {
+                    date: to.date,
+                    startTime: to.time,
+                    endTime: minutesToTime(newEndMinutes)
+                });
+            }
         }
     }
 
@@ -211,16 +231,31 @@
 
         const oldStatus = event.status;
 
-        // If marking as completed, add time to daily activity
+        // If marking as completed, add time to the task's scheduled date
         if (newStatus === 'completed' && oldStatus !== 'completed') {
-            const duration = getSubtaskDuration(event);
-            addTimeToDate(event.date, duration);
+            // Check if task is within 24 hours of being due
+            const taskDate = new Date(event.date + 'T' + event.endTime);
+            const now = new Date();
+            const hoursSinceDue = (now.getTime() - taskDate.getTime()) / (1000 * 60 * 60);
+
+            // Only add time if within 24 hours of due time
+            if (hoursSinceDue <= 24) {
+                const duration = getSubtaskDuration(event);
+                addTimeToDate(event.date, duration);
+                // Store which date it was completed on
+                updateSubtask(eventId, { status: newStatus, completedOnDate: event.date });
+            } else {
+                // Just update status without adding time
+                updateSubtask(eventId, { status: newStatus });
+            }
+            return;
         }
 
-        // If unmarking as completed, subtract time from daily activity
+        // If unmarking as completed, subtract time from the date it was originally completed on
         if (oldStatus === 'completed' && newStatus !== 'completed') {
             const duration = getSubtaskDuration(event);
-            addTimeToDate(event.date, -duration);
+            const completedOnDate = event.completedOnDate || event.date;
+            addTimeToDate(completedOnDate, -duration);
         }
 
         updateSubtask(eventId, { status: newStatus });

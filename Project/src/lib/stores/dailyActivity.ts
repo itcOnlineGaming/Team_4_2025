@@ -35,10 +35,18 @@ export function addTimeToDate(date: string, minutes: number): void {
     dailyActivity.update(activities => {
         const existing = activities.find(a => a.date === date);
         if (existing) {
-            existing.totalMinutes += minutes;
-        } else {
+            // Prevent negative time
+            existing.totalMinutes = Math.max(0, existing.totalMinutes + minutes);
+
+            // Remove entry if it reaches 0
+            if (existing.totalMinutes === 0) {
+                return activities.filter(a => a.date !== date);
+            }
+        } else if (minutes > 0) {
+            // Only create new entry if adding positive time
             activities.push({ date, totalMinutes: minutes });
         }
+        // If minutes is negative and no existing entry, ignore (prevent negative)
         return [...activities];
     });
 }
@@ -51,4 +59,23 @@ export function getTotalMinutesForDate(date: string): number {
     });
     unsubscribe();
     return total;
+}
+
+export function repopulateFromCompletedTasks(completedTasks: Array<{ date: string; duration: number; completedOnDate?: string }>): void {
+    dailyActivity.update(activities => {
+        // Create a map of existing activities
+        const activityMap = new Map(activities.map(a => [a.date, a.totalMinutes]));
+
+        // Add up all completed task durations by their completedOnDate
+        completedTasks.forEach(task => {
+            const targetDate = task.completedOnDate || task.date;
+            const current = activityMap.get(targetDate) || 0;
+            activityMap.set(targetDate, current + task.duration);
+        });
+
+        // Convert map back to array, filtering out zero values
+        return Array.from(activityMap.entries())
+            .filter(([_, minutes]) => minutes > 0)
+            .map(([date, totalMinutes]) => ({ date, totalMinutes }));
+    });
 }
