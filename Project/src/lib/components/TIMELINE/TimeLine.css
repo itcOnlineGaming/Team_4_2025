@@ -25,9 +25,7 @@
     justify-content: center;
 }
 .add-task-wrapper {
-    position: fixed;
-    bottom: 0.45rem;
-    left: 7rem;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,7 +42,7 @@
 
     border: none;
     border-radius: 50%;
-    background-color: #1976d2;
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     color: white;
     font-size: 2rem;
     font-weight: bold;
@@ -58,18 +56,74 @@
     z-index: 9999;
 
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-    transition: background-color 0.2s, transform 0.15s;
+    transition: transform 0.3s, background-color 0.2s;
 }
 
 /* Hover bounce */
 .add-task-button:hover {
-    background-color: #1565c0;
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     transform: translateX(-50%) scale(1.07);
 }
 
-.add-task-button:active {
-    transform: translateX(-50%) scale(0.95);
+
+.add-task-button.active {
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
+
+.add-options-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 1000;
+    animation: slideDown 0.3s ease-out;
+}
+
+.add-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    color: #333;
+    border: 2px solid #333;
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.add-option:hover {
+    transform: translateX(4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.option-icon {
+    font-size: 1.125rem;
+}
+
+.option-label {
+    font-weight: 600;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .tooltip {
     position: absolute;
     bottom: 75px; /* sits above the button */

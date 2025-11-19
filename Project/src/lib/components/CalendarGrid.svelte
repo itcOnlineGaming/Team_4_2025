@@ -1,115 +1,46 @@
+
 <script lang="ts">
     import './style.css';
     export let weekDates: Date[];
     export let timeSlots: string[];
     export let daysOfWeek: string[];
     export let eventsIndex: Record<string, any>;
+    export let pixelsPerHour: number;
     export let handleCellClick: (date: string, time: string) => void;
     export let formatDate: (date: Date) => string;
     export let isToday: (date: Date) => boolean;
     export let onEventMove: (from: {date: string, time: string}, to: {date: string, time: string}) => void;
+    export let onSubtaskClick: (subtask: any) => void;
+    export let onSubtaskResize: (eventId: number, newStartMinutes: number, newEndMinutes: number) => void;
 
     import TimeLine from './TIMELINE/timeLine.svelte';
+    import SubtaskCard from './SubtaskCard.svelte';
 
     let currentHour = new Date().getHours();
-    let draggedKey: string | null = null;
-    let dragGhost: HTMLElement | null = null;
+    let draggedSubtaskKey: string | null = null;
 
-    function drag(node: HTMLElement) {
-        let isDragging = false;
-        let offsetX = 0;
-        let offsetY = 0;
-
-        const handleMousedown = (e: MouseEvent) => {
-            if (!node.classList.contains('has-event')) return;
-
-            isDragging = true;
-            draggedKey = node.getAttribute('data-key');
-            const rect = node.getBoundingClientRect();
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
-
-            // ✅ Create ghost copy
-            dragGhost = node.cloneNode(true) as HTMLElement;
-            dragGhost.classList.add('drag-ghost');
-
-            // ✅ Remove drag-source and any greyed-out styles from the ghost
-            dragGhost.classList.remove('drag-source');
-            const badge = dragGhost.querySelector('.event-badge') as HTMLElement;
-            if (badge) {
-                badge.style.opacity = '1';
-                badge.style.filter = 'none';
-            }
-
-            dragGhost.style.position = 'fixed';
-            dragGhost.style.left = `${rect.left}px`;
-            dragGhost.style.top = `${rect.top}px`;
-            dragGhost.style.width = `${rect.width}px`;
-            dragGhost.style.height = `${rect.height}px`;
-            dragGhost.style.pointerEvents = 'none';
-            dragGhost.style.zIndex = '2000';
-            dragGhost.style.opacity = '0.95';
-
-            document.body.appendChild(dragGhost);
-        };
-
-        const handleMousemove = (e: MouseEvent) => {
-            if (!isDragging || !dragGhost) return;
-            dragGhost.style.left = `${e.clientX - offsetX}px`;
-            dragGhost.style.top = `${e.clientY - offsetY}px`;
-        };
-
-        const handleMouseup = () => {
-            if (isDragging) {
-                dragGhost?.remove();
-                dragGhost = null;
-                isDragging = false;
-            }
-        };
-
-        node.addEventListener('mousedown', handleMousedown);
-        window.addEventListener('mousemove', handleMousemove);
-        window.addEventListener('mouseup', handleMouseup);
-
-        return {
-            destroy() {
-                node.removeEventListener('mousedown', handleMousedown);
-                window.removeEventListener('mousemove', handleMousemove);
-                window.removeEventListener('mouseup', handleMouseup);
-            }
-        };
+    function handleSubtaskDragStart(key: string) {
+        draggedSubtaskKey = key;
     }
 
-    function handleCellDragging(date: string, time: string) {
-        const key = `${date}|${time}`;
-        if (eventsIndex[key]) {
-            draggedKey = key;
-        }
-    }
+    function handleCellDrop(date: string, time: string) {
+        if (!draggedSubtaskKey) return;
 
-    function handleCellPlacement(date: string, time: string) {
-        if (!draggedKey) return;
-        const fromParts = draggedKey.split('|');
+        const fromParts = draggedSubtaskKey.split('|');
         const from = { date: fromParts[0], time: fromParts[1] };
         const to = { date, time };
 
         if (from.date === to.date && from.time === to.time) {
-            draggedKey = null;
+            draggedSubtaskKey = null;
             return;
         }
 
-        // Only allow placement if target slot is empty
-        const targetKey = `${date}|${time}`;
-        if (eventsIndex[targetKey]) {
-            draggedKey = null;
-            return;
-        }
-
-        // Notify parent to move event (and persist it)
         onEventMove(from, to);
+        draggedSubtaskKey = null;
+    }
 
-        // Clear drag state
-        draggedKey = null;
+    function handleSubtaskCardClick(subtask: any) {
+        onSubtaskClick(subtask);
     }
 </script>
 
@@ -128,33 +59,47 @@
 
     <TimeLine {weekDates} />
 
-    <div class="grid-body">
+    <div class="grid-body" style="--pixels-per-hour: {pixelsPerHour}px;">
         {#each timeSlots as timeSlot, timeIndex}
-            <div class="time-row">
+            <div class="time-row" style="height: {pixelsPerHour}px;">
                 <div class="time-slot">{timeSlot}</div>
                 {#each weekDates as date, dayIndex}
                     {@const dateStr = date.toISOString().split('T')[0]}
                     {@const key = `${dateStr}|${timeSlot}`}
-                    <button
-                            type="button"
+                    <div
                             class="calendar-cell"
                             class:current-hour={isToday(date) && currentHour === timeIndex}
-                            class:has-event={!!eventsIndex[key]}
-                            class:drag-source={key === draggedKey}
-                            data-key={key}
-                            on:click={() => handleCellClick(dateStr, timeSlot)}
-                            on:mousedown={() => handleCellDragging(dateStr, timeSlot)}
-                            on:mouseup={() => handleCellPlacement(dateStr, timeSlot)}
-                            use:drag
+                            class:drop-target={draggedSubtaskKey && key !== draggedSubtaskKey && !eventsIndex[key]}
+                            on:mouseup={() => handleCellDrop(dateStr, timeSlot)}
                     >
-                        {#if eventsIndex[key]}
-                            <div class="event-badge">
-                                {eventsIndex[key].title}
-                            </div>
-                        {/if}
-                    </button>
+                        <!-- Empty timeline cell -->
+                    </div>
                 {/each}
             </div>
         {/each}
+
+        <!-- Floating subtasks layer -->
+        <div class="subtasks-layer">
+            {#each Object.values(eventsIndex) as subtask}
+                {@const dayIndex = weekDates.findIndex(d => d.toISOString().split('T')[0] === subtask.date)}
+                {#if dayIndex !== -1}
+                    <SubtaskCard
+                            {subtask}
+                            {pixelsPerHour}
+                            gridColumn={dayIndex + 1}
+                            isBeingDragged={draggedSubtaskKey === `${subtask.date}|${subtask.startTime}`}
+                            onDragStart={() => handleSubtaskDragStart(`${subtask.date}|${subtask.startTime}`)}
+                            onClick={() => handleSubtaskCardClick(subtask)}
+                            onResize={(newStartMinutes, newEndMinutes) => onSubtaskResize(subtask.id, newStartMinutes, newEndMinutes)}
+                    />
+                {/if}
+            {/each}
+        </div>
     </div>
 </div>
+
+<style>
+    .grid-body {
+        --pixels-per-hour: 60px;
+    }
+</style>

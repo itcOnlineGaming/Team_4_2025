@@ -1,19 +1,12 @@
 <script lang="ts">
-    type CalendarEvent = {
-        id: number;
-        date: string;
-        time: string;
-        title: string;
-        description: string;
-    };
-
     export let showModal: boolean = false;
     export let modalMode: 'create' | 'view' = 'create';
     export let targetDate: string = '';
-    export let targetTime: string = '';
+    export let startTimeInput: string = '';
+    export let endTimeInput: string = '';
     export let titleInput: string = '';
     export let descriptionInput: string = '';
-    
+
     export let onClose: () => void;
     export let onSave: () => void;
     export let onDelete: () => void;
@@ -30,55 +23,77 @@
 </script>
 
 {#if showModal}
-    <div 
-        class="modal-overlay" 
-        on:click={onClose}
-        on:keydown={handleOverlayKeydown}
-        role="button"
-        tabindex="-1"
-    >
-        <div 
-            class="modal-content" 
-            on:click|stopPropagation
-            on:keydown={handleContentKeydown}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
+    <div
+            class="modal-overlay"
+            on:click={onClose}
+            on:keydown={handleOverlayKeydown}
+            role="button"
             tabindex="-1"
+    >
+        <div
+                class="modal-content"
+                on:click|stopPropagation
+                on:keydown={handleContentKeydown}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-title"
+                tabindex="-1"
         >
             <div class="modal-header">
-                <h2 id="modal-title">{modalMode === 'create' ? 'Create Event' : 'Event Details'}</h2>
+                <h2 id="modal-title">{modalMode === 'create' ? 'Create Subtask' : 'Subtask Details'}</h2>
                 <button class="close-button" on:click={onClose}>×</button>
             </div>
-            
+
             <div class="modal-body">
                 <div class="modal-info">
-                    <strong>Date:</strong> {targetDate} at {targetTime}
+                    <strong>Date:</strong> {targetDate}
                 </div>
-                
+
                 <div class="form-group">
                     <label for="title">Title</label>
                     <input
-                        id="title"
-                        type="text"
-                        bind:value={titleInput}
-                        placeholder="Enter event title"
-                        class="modal-input"
+                            id="title"
+                            type="text"
+                            bind:value={titleInput}
+                            placeholder="Enter subtask title"
+                            class="modal-input"
                     />
                 </div>
-                
+
+                <div class="time-inputs">
+                    <div class="form-group">
+                        <label for="startTime">Start Time</label>
+                        <input
+                                id="startTime"
+                                type="time"
+                                bind:value={startTimeInput}
+                                class="modal-input"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endTime">End Time</label>
+                        <input
+                                id="endTime"
+                                type="time"
+                                bind:value={endTimeInput}
+                                class="modal-input"
+                        />
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="description">Description</label>
                     <textarea
-                        id="description"
-                        bind:value={descriptionInput}
-                        placeholder="Enter event description (optional)"
-                        class="modal-textarea"
-                        rows="4"
+                            id="description"
+                            bind:value={descriptionInput}
+                            placeholder="Enter subtask description (optional)"
+                            class="modal-textarea"
+                            rows="4"
                     ></textarea>
                 </div>
             </div>
-            
+
             <div class="modal-footer">
                 {#if modalMode === 'view'}
                     <button class="delete-button" on:click={onDelete}>
@@ -98,4 +113,10 @@
 
 <style>
     @import './modal.css';
+
+    .time-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
 </style>
