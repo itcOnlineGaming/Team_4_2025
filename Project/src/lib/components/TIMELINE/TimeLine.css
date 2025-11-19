@@ -5,148 +5,20 @@
 
 .timeline-header {
     display: grid;
-    grid-template-columns: 60px repeat(7, 1fr);
+    grid-template-columns: 80px repeat(7, 1fr);
     border-bottom: 1px solid #e0e0e0;
     background: #f8f9fa;
     min-height: 50px;
     position: relative;
 }
 
-.timeline-label {
-    padding: 0.75rem 0.5rem;
-    text-align: center;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #70757a;
-    text-transform: uppercase;
-    border-right: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.add-task-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000; /* stays above calendar */
-}
-.add-task-button {
-    position: fixed;
-    bottom: 20px;
-    left: 50px;
-    transform: translateX(-50%);
-    
-    width: 60px;
-    height: 60px;
-
-    border: none;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    color: white;
-    font-size: 2rem;
-    font-weight: bold;
-    line-height: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    cursor: pointer;
-    z-index: 9999;
-
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-    transition: transform 0.3s, background-color 0.2s;
+.timeline-spacer {
+    grid-column: 1;
 }
 
-/* Hover bounce */
-.add-task-button:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    transform: translateX(-50%) scale(1.07);
-}
-
-
-.add-task-button.active {
-    transform: rotate(45deg);
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-}
-
-.add-options-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    margin-top: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 1000;
-    animation: slideDown 0.3s ease-out;
-}
-
-.add-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: white;
-    color: #333;
-    border: 2px solid #333;
-    border-radius: 20px;
-    padding: 10px 16px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.add-option:hover {
-    transform: translateX(4px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-}
-
-.option-icon {
-    font-size: 1.125rem;
-}
-
-.option-label {
-    font-weight: 600;
-}
-
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.tooltip {
-    position: absolute;
-    bottom: 75px; /* sits above the button */
-    right: 0;
-    background: #333;
-    color: #fff;
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-    transform: translateX(10%);
-}
-
-/* Show tooltip on hover */
-.add-task-wrapper:hover .tooltip {
-    opacity: 1;
-}
 .day-separator {
     border-right: 1px solid #e0e0e0;
-    min-width: 120px;
+    min-width: 0;
     background: #f8f9fa;
 }
 
@@ -156,11 +28,6 @@
 
 @media (max-width: 768px) {
     .day-separator {
-        min-width: 80px;
-    }
-    
-    .timeline-label {
-        font-size: 0.625rem;
-        padding: 0.5rem 0.25rem;
+        min-width: 0;
     }
 }

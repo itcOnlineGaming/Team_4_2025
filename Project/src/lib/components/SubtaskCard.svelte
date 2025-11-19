@@ -1,21 +1,30 @@
-
 <script lang="ts">
     export let subtask: any;
     export let gridColumn: number;
+    export let gridRow: number; // Keep for backwards compatibility but won't use
     export let pixelsPerHour: number;
     export let isBeingDragged: boolean = false;
     export let onDragStart: (e: MouseEvent) => void;
     export let onClick: () => void;
     export let onResize: (newStartMinutes: number, newEndMinutes: number) => void;
+    export let onStatusChange: (newStatus: 'pending' | 'completed' | 'cancelled') => void;
 
     const SNAP_INTERVAL = 15;
     const MIN_HEIGHT_FOR_TEXT = 30;
+    const DRAG_THRESHOLD = 5;
 
     let isResizing = false;
     let resizeHandle: 'top' | 'bottom' | null = null;
     let initialStartMinutes = 0;
     let initialEndMinutes = 0;
     let initialY = 0;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let hasMoved = false;
+
+    // Track visual resize state separately
+    let visualStartMinutes = 0;
+    let visualEndMinutes = 0;
 
     function timeToMinutes(timeStr: string): number {
         const [hours, minutes] = timeStr.split(':').map(Number);
@@ -26,11 +35,15 @@
         return Math.round(minutes / SNAP_INTERVAL) * SNAP_INTERVAL;
     }
 
-    $: startMinutes = timeToMinutes(subtask.startTime);
-    $: endMinutes = timeToMinutes(subtask.endTime);
+    $: startMinutes = isResizing && resizeHandle === 'top' ? visualStartMinutes : timeToMinutes(subtask.startTime);
+    $: endMinutes = isResizing && resizeHandle === 'bottom' ? visualEndMinutes : timeToMinutes(subtask.endTime);
+    $: durationMinutes = endMinutes - startMinutes;
+    $: durationHours = durationMinutes / 60;
+    $: showText = (durationHours * pixelsPerHour) >= MIN_HEIGHT_FOR_TEXT;
+
+    // Calculate absolute positioning from minutes
     $: topPosition = (startMinutes / 60) * pixelsPerHour;
-    $: height = ((endMinutes - startMinutes) / 60) * pixelsPerHour;
-    $: showText = height >= MIN_HEIGHT_FOR_TEXT;
+    $: height = (durationMinutes / 60) * pixelsPerHour;
 
     function dragSubtask(node: HTMLElement) {
         let isDragging = false;
@@ -44,61 +57,78 @@
                 return;
             }
 
-            e.preventDefault();
-            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            hasMoved = false;
 
             const rect = node.getBoundingClientRect();
             offsetX = e.clientX - rect.left;
             offsetY = e.clientY - rect.top;
 
-            document.body.style.userSelect = 'none';
-            document.body.style.webkitUserSelect = 'none';
+            const handleMousemoveStart = (e: MouseEvent) => {
+                const deltaX = Math.abs(e.clientX - dragStartX);
+                const deltaY = Math.abs(e.clientY - dragStartY);
 
-            dragGhost = node.cloneNode(true) as HTMLElement;
-            dragGhost.classList.add('drag-ghost');
-            dragGhost.style.position = 'fixed';
-            dragGhost.style.left = `${rect.left}px`;
-            dragGhost.style.top = `${rect.top}px`;
-            dragGhost.style.width = `${rect.width}px`;
-            dragGhost.style.height = `${rect.height}px`;
-            dragGhost.style.pointerEvents = 'none';
-            dragGhost.style.zIndex = '2000';
-            dragGhost.style.opacity = '0.8';
+                if (!isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
+                    isDragging = true;
+                    hasMoved = true;
+                    e.preventDefault();
 
-            document.body.appendChild(dragGhost);
-            node.style.opacity = '0.3';
+                    document.body.style.userSelect = 'none';
+                    document.body.style.webkitUserSelect = 'none';
 
-            onDragStart(e);
-        };
+                    dragGhost = node.cloneNode(true) as HTMLElement;
+                    dragGhost.classList.add('drag-ghost');
+                    dragGhost.style.position = 'fixed';
+                    dragGhost.style.left = `${rect.left}px`;
+                    dragGhost.style.top = `${rect.top}px`;
+                    dragGhost.style.width = `${rect.width}px`;
+                    dragGhost.style.height = `${rect.height}px`;
+                    dragGhost.style.pointerEvents = 'none';
+                    dragGhost.style.zIndex = '2000';
+                    dragGhost.style.opacity = '0.8';
 
-        const handleMousemove = (e: MouseEvent) => {
-            if (!isDragging || !dragGhost) return;
-            e.preventDefault();
-            dragGhost.style.left = `${e.clientX - offsetX}px`;
-            dragGhost.style.top = `${e.clientY - offsetY}px`;
-        };
+                    document.body.appendChild(dragGhost);
+                    node.style.opacity = '0.3';
 
-        const handleMouseup = () => {
-            if (isDragging) {
-                dragGhost?.remove();
-                dragGhost = null;
-                node.style.opacity = '1';
-                isDragging = false;
+                    onDragStart(e);
+                    window.removeEventListener('mousemove', handleMousemoveStart);
+                    window.addEventListener('mousemove', handleMousemove);
+                }
+            };
 
-                document.body.style.userSelect = '';
-                document.body.style.webkitUserSelect = '';
-            }
+            const handleMousemove = (e: MouseEvent) => {
+                if (!isDragging || !dragGhost) return;
+                e.preventDefault();
+                dragGhost.style.left = `${e.clientX - offsetX}px`;
+                dragGhost.style.top = `${e.clientY - offsetY}px`;
+            };
+
+            const handleMouseup = () => {
+                if (isDragging) {
+                    dragGhost?.remove();
+                    dragGhost = null;
+                    node.style.opacity = '1';
+                    isDragging = false;
+
+                    document.body.style.userSelect = '';
+                    document.body.style.webkitUserSelect = '';
+                }
+
+                window.removeEventListener('mousemove', handleMousemoveStart);
+                window.removeEventListener('mousemove', handleMousemove);
+                window.removeEventListener('mouseup', handleMouseup);
+            };
+
+            window.addEventListener('mousemove', handleMousemoveStart);
+            window.addEventListener('mouseup', handleMouseup);
         };
 
         node.addEventListener('mousedown', handleMousedown);
-        window.addEventListener('mousemove', handleMousemove);
-        window.addEventListener('mouseup', handleMouseup);
 
         return {
             destroy() {
                 node.removeEventListener('mousedown', handleMousedown);
-                window.removeEventListener('mousemove', handleMousemove);
-                window.removeEventListener('mouseup', handleMouseup);
                 document.body.style.userSelect = '';
                 document.body.style.webkitUserSelect = '';
             }
@@ -112,8 +142,10 @@
         isResizing = true;
         resizeHandle = handle;
         initialY = e.clientY;
-        initialStartMinutes = startMinutes;
-        initialEndMinutes = endMinutes;
+        initialStartMinutes = timeToMinutes(subtask.startTime);
+        initialEndMinutes = timeToMinutes(subtask.endTime);
+        visualStartMinutes = initialStartMinutes;
+        visualEndMinutes = initialEndMinutes;
 
         document.body.style.userSelect = 'none';
         document.body.style.webkitUserSelect = 'none';
@@ -127,19 +159,27 @@
             const deltaMinutes = (deltaY / pixelsPerHour) * 60;
 
             if (resizeHandle === 'bottom') {
-                const newEndMinutes = snapToInterval(initialEndMinutes + deltaMinutes);
-                if (newEndMinutes > initialStartMinutes && newEndMinutes <= 1440) {
-                    onResize(initialStartMinutes, newEndMinutes);
+                const rawEndMinutes = initialEndMinutes + deltaMinutes;
+                const newEndMinutes = snapToInterval(rawEndMinutes);
+                if (newEndMinutes > visualStartMinutes && newEndMinutes <= 1440) {
+                    visualEndMinutes = newEndMinutes;
                 }
             } else if (resizeHandle === 'top') {
-                const newStartMinutes = snapToInterval(initialStartMinutes + deltaMinutes);
-                if (newStartMinutes >= 0 && newStartMinutes < initialEndMinutes) {
-                    onResize(newStartMinutes, initialEndMinutes);
+                const rawStartMinutes = initialStartMinutes + deltaMinutes;
+                const newStartMinutes = snapToInterval(rawStartMinutes);
+                if (newStartMinutes >= 0 && newStartMinutes < visualEndMinutes) {
+                    visualStartMinutes = newStartMinutes;
                 }
             }
         };
 
         const handleMouseUp = () => {
+            if (resizeHandle === 'bottom') {
+                onResize(visualStartMinutes, visualEndMinutes);
+            } else if (resizeHandle === 'top') {
+                onResize(visualStartMinutes, visualEndMinutes);
+            }
+
             isResizing = false;
             resizeHandle = null;
 
@@ -156,11 +196,25 @@
     }
 
     function handleCardClick() {
-        onClick();
+        if (!hasMoved) {
+            onClick();
+        }
+        hasMoved = false;
     }
 
     function handleStatusClick(e: Event) {
         e.stopPropagation();
+
+        let newStatus: 'pending' | 'completed' | 'cancelled';
+        if (subtask.status === 'pending') {
+            newStatus = 'completed';
+        } else if (subtask.status === 'completed') {
+            newStatus = 'cancelled';
+        } else {
+            newStatus = 'pending';
+        }
+
+        onStatusChange(newStatus);
     }
 </script>
 
@@ -170,56 +224,72 @@
         class:resizing={isResizing}
         style="
         grid-column: {gridColumn};
-        top: {topPosition}px;
-        height: {height}px;
+        grid-row: 1 / -1;
+        pointer-events: none;
     "
-        use:dragSubtask
 >
-    <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')}></div>
-    <div class="subtask-card" class:minimal={!showText} on:click={handleCardClick} role="button" tabindex="0">
-        {#if showText}
-            <button class="status-badge {subtask.status || 'pending'}" on:click={handleStatusClick} type="button">
-                {#if subtask.status === 'completed'}
-                    ✓
-                {:else if subtask.status === 'cancelled'}
-                    ✕
-                {:else}
-                    ○
-                {/if}
-            </button>
-            <div class="subtask-content">
-                <span class="subtask-title">{subtask.title}</span>
-            </div>
-        {/if}
+    <div
+            class="subtask-positioner"
+            style="
+            position: absolute;
+            top: {topPosition}px;
+            height: {height}px;
+            width: 100%;
+            pointer-events: auto;
+        "
+            use:dragSubtask
+    >
+        <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')}></div>
+        <div class="subtask-card" class:minimal={!showText} on:click={handleCardClick} role="button" tabindex="0">
+            {#if showText}
+                <button class="status-badge {subtask.status || 'pending'}" on:click={handleStatusClick} type="button">
+                    {#if subtask.status === 'completed'}
+                        ✓
+                    {:else if subtask.status === 'cancelled'}
+                        ✕
+                    {:else}
+                        ○
+                    {/if}
+                </button>
+                <div class="subtask-content">
+                    <span class="subtask-title">{subtask.title}</span>
+                </div>
+            {/if}
+        </div>
+        <div class="resize-handle resize-bottom" on:mousedown={(e) => handleResizeStart(e, 'bottom')}></div>
     </div>
-    <div class="resize-handle resize-bottom" on:mousedown={(e) => handleResizeStart(e, 'bottom')}></div>
 </div>
 
 <style>
     .floating-subtask {
-        pointer-events: auto;
-        cursor: move;
-        position: absolute;
-        left: 8px;
-        width: calc(100% - 16px);
-        max-width: 140px;
+        pointer-events: none;
+        position: relative;
+        height: 100%;
+    }
+
+    .subtask-positioner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
         user-select: none;
         -webkit-user-select: none;
         box-sizing: border-box;
+        cursor: move;
     }
 
-    .floating-subtask.being-dragged {
+    .subtask-positioner.being-dragged {
         opacity: 0.3;
     }
 
-    .floating-subtask.resizing {
+    .subtask-positioner.resizing {
         cursor: ns-resize;
     }
 
     .resize-handle {
         position: absolute;
-        left: 4px;
-        right: 4px;
+        left: 8px;
+        right: 8px;
         height: 10px;
         cursor: ns-resize;
         z-index: 10;
@@ -228,7 +298,7 @@
         border-radius: 4px;
     }
 
-    .floating-subtask:hover .resize-handle {
+    .subtask-positioner:hover .resize-handle {
         opacity: 1;
     }
 
@@ -255,16 +325,23 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s, box-shadow 0.2s;
         height: 100%;
+        width: 100%;
+        max-width: 140px;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         gap: 8px;
         position: relative;
         user-select: none;
         -webkit-user-select: none;
         box-sizing: border-box;
         overflow: hidden;
-        width: 100%;
+    }
+
+    @media (max-width: 768px) {
+        .subtask-card {
+            max-width: 100%;
+        }
     }
 
     .subtask-card.minimal {
@@ -272,6 +349,9 @@
     }
 
     .status-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
         flex-shrink: 0;
         width: 22px;
         height: 22px;
@@ -280,7 +360,7 @@
         background: white;
         display: flex;
         align-items: center;
-        justify-content: right;
+        justify-content: center;
         cursor: pointer;
         font-size: 12px;
         font-weight: bold;
@@ -307,16 +387,17 @@
     }
 
     .status-badge:hover {
-        transform: scale(1.1);
+        transform: scale(1.15);
     }
 
     .subtask-content {
         flex: 1;
         width: 100%;
+        padding-right: 28px;
         overflow: hidden;
         display: flex;
         align-items: flex-start;
-        justify-content: left;
+        justify-content: flex-start;
     }
 
     .subtask-title {
@@ -329,12 +410,12 @@
         user-select: none;
         -webkit-user-select: none;
         font-size: 0.75rem;
-        text-align: center;
+        text-align: left;
         word-break: break-word;
         hyphens: auto;
     }
 
-    .floating-subtask:hover .subtask-card {
+    .subtask-positioner:hover .subtask-card {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }

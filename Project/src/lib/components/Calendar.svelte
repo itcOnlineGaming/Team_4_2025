@@ -1,7 +1,7 @@
-
 <script lang="ts">
     import CalendarGrid from './CalendarGrid.svelte';
     import EventModal from './EventModal.svelte';
+    import MajorItemModal from './TIMELINE/MajorItemModal.svelte';
     import MonthSidebar from './MonthSidebar.svelte';
     import {
         subtasks,
@@ -10,11 +10,15 @@
         updateSubtask,
         timeToMinutes,
         minutesToTime,
-        type Subtask
+        type Subtask,
+        getSubtaskDuration
     } from '../stores/subtasks';
+    import { majorTasks, createNewTask, getWeekStart } from '../stores/majorTasks';
+    import { addTimeToDate } from '../stores/dailyActivity';
 
     let eventsIndex: Record<string, Subtask> = {};
     let showModal = false;
+    let showMajorTaskModal = false;
     let modalMode: 'create' | 'view' = 'create';
     let selectedEvent: Subtask | null = null;
     let targetDate = '';
@@ -24,6 +28,7 @@
     let titleInput = '';
     let descriptionInput = '';
     let showAddOptions = false;
+    let currentWeekStart = '';
 
     // Zoom state: pixels per hour (default 60px = 1 hour)
     let pixelsPerHour = 60;
@@ -42,6 +47,11 @@
 
     // Calculate current week dates
     $: weekDates = getWeekDates(currentWeekOffset);
+
+    // Calculate current week start for major tasks
+    $: if (weekDates.length > 0) {
+        currentWeekStart = getWeekStart(weekDates[0]);
+    }
 
     // Build events index from store
     $: {
@@ -195,6 +205,27 @@
         openViewModal(subtask, subtask.date, subtask.startTime);
     }
 
+    function handleStatusChange(eventId: number, newStatus: 'pending' | 'completed' | 'cancelled') {
+        const event = $subtasks.find(e => e.id === eventId);
+        if (!event) return;
+
+        const oldStatus = event.status;
+
+        // If marking as completed, add time to daily activity
+        if (newStatus === 'completed' && oldStatus !== 'completed') {
+            const duration = getSubtaskDuration(event);
+            addTimeToDate(event.date, duration);
+        }
+
+        // If unmarking as completed, subtract time from daily activity
+        if (oldStatus === 'completed' && newStatus !== 'completed') {
+            const duration = getSubtaskDuration(event);
+            addTimeToDate(event.date, -duration);
+        }
+
+        updateSubtask(eventId, { status: newStatus });
+    }
+
     function handleSubtaskResize(eventId: number, newStartMinutes: number, newEndMinutes: number) {
         updateSubtask(eventId, {
             startTime: minutesToTime(newStartMinutes),
@@ -208,13 +239,33 @@
 
     function handleAddMajorTask() {
         showAddOptions = false;
-        // Major task modal would go here
+        showMajorTaskModal = true;
     }
 
     function handleAddSubtask() {
         showAddOptions = false;
         const today = new Date().toISOString().split('T')[0];
         openCreateModal(today, '09:00');
+    }
+
+    function handleCreateMajorTask(event: CustomEvent) {
+        if (currentWeekStart) {
+            const taskData = event.detail;
+            const newTask = createNewTask(
+                currentWeekStart,
+                taskData.title,
+                taskData.description,
+                taskData.color,
+                taskData.startDay,
+                taskData.endDay
+            );
+            majorTasks.update(tasks => [...tasks, newTask]);
+        }
+        showMajorTaskModal = false;
+    }
+
+    function handleCloseMajorTaskModal() {
+        showMajorTaskModal = false;
     }
 
     function zoomIn() {
@@ -289,6 +340,7 @@
                 onEventMove={handleEventMove}
                 onSubtaskClick={handleSubtaskClick}
                 onSubtaskResize={handleSubtaskResize}
+                onStatusChange={handleStatusChange}
         />
 
         <EventModal
@@ -302,6 +354,12 @@
                 onClose={handleModalClose}
                 onSave={handleModalSave}
                 onDelete={handleModalDelete}
+        />
+
+        <MajorItemModal
+                bind:showModal={showMajorTaskModal}
+                on:create={handleCreateMajorTask}
+                on:close={handleCloseMajorTaskModal}
         />
     </div>
 

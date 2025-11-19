@@ -197,7 +197,7 @@ body {
     padding: 8px;
     text-align: right;
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(0, 0, 0, 0.5);
     border-right: 1px solid #999999;
     border-top: 1px solid #000000;
 }
