@@ -44,9 +44,12 @@
 
 <div class="timeline-container">
     <div class="timeline-header">
+        <div class = "add-task-wrapper">
         <button type="button" class="add-task-button" on:click={openModal} aria-label="Add new major task">
             +
         </button>
+        <span class ="tooltip">Add Major Task</span>
+        </div>
         <div class="day-separator"></div>
         <div class="day-separator"></div>
         <div class="day-separator"></div>
