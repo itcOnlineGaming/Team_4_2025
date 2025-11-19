@@ -14,7 +14,7 @@
         position: fixed;
         bottom: 1.5rem;
         right: 1.5rem;
-        background-color: #2563eb;
+        background-color: #7F6399;
         color: white;
         font-weight: 600;
         border: none;
@@ -27,7 +27,7 @@
     }
 
     .feedback-button:hover {
-        background-color: #1e40af;
+        background-color: #866e9c;
         transform: translateY(-2px);
     }
 
