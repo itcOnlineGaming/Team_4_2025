@@ -1,0 +1,372 @@
+/* =========================================================
+   SUBTASK MODAL STYLES
+   Enhanced styling for EventModal.svelte
+   ========================================================= */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(78, 61, 103, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 20px 60px rgba(78, 61, 103, 0.4);
+    animation: slideUp 0.3s ease-out;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   MODAL HEADER
+   ========================================================= */
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 1.75rem;
+    background: linear-gradient(135deg, #a987c6 0%, #8c62cf 100%);
+    border-radius: 20px 20px 0 0;
+    color: white;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.icon-wrapper {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 600;
+}
+
+.close-button {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    font-size: 2rem;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    transition: all 0.2s;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.close-button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: rotate(90deg);
+}
+
+/* =========================================================
+   MODAL BODY
+   ========================================================= */
+
+.modal-body {
+    padding: 1.75rem;
+}
+
+/* Date Badge */
+.date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #e4d0ef 0%, #d9cce7 100%);
+    padding: 0.75rem 1.25rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9375rem;
+    color: #4e3d67;
+    font-weight: 500;
+}
+
+.date-icon {
+    font-size: 1.125rem;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.625rem;
+    font-weight: 600;
+    color: #4e3d67;
+    font-size: 0.9375rem;
+}
+
+.label-text {
+    margin-right: 0.25rem;
+}
+
+.label-required {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.label-optional {
+    color: #9688ae;
+    font-weight: 400;
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
+/* Form Inputs */
+.modal-input,
+.modal-textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #d9cce7;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: white;
+    color: #333;
+    box-sizing: border-box;
+}
+
+.modal-input:focus,
+.modal-textarea:focus {
+    outline: none;
+    border-color: #8c62cf;
+    box-shadow: 0 0 0 3px rgba(140, 98, 207, 0.15);
+}
+
+.modal-input::placeholder,
+.modal-textarea::placeholder {
+    color: #b0a3c4;
+}
+
+.time-input {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.modal-textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+/* Time Inputs Grid */
+.time-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Duration Display */
+.duration-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border: 2px solid #e4d0ef;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    color: #4e3d67;
+    font-size: 0.9375rem;
+}
+
+.duration-icon {
+    font-size: 1.125rem;
+}
+
+.duration-text strong {
+    color: #8c62cf;
+    font-weight: 700;
+}
+
+/* =========================================================
+   MODAL FOOTER
+   ========================================================= */
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 1.75rem;
+    border-top: 2px solid #f1f3f4;
+    background: #fafafa;
+    border-radius: 0 0 20px 20px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.modal-footer button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.button-icon {
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Cancel Button */
+.cancel-button {
+    background: white;
+    color: #666;
+    border: 2px solid #e0e0e0;
+}
+
+.cancel-button:hover {
+    background: #f8f9fa;
+    border-color: #d0d0d0;
+    transform: translateY(-1px);
+}
+
+/* Save Button */
+.save-button {
+    background: linear-gradient(135deg, #a987c6 0%, #8c62cf 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(140, 98, 207, 0.3);
+}
+
+.save-button:hover {
+    box-shadow: 0 6px 16px rgba(140, 98, 207, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Delete Button */
+.delete-button {
+    background: #fff5f5;
+    color: #dc3545;
+    border: 2px solid #fecaca;
+}
+
+.delete-button:hover {
+    background: #fee;
+    border-color: #fca5a5;
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   RESPONSIVE (MOBILE)
+   ========================================================= */
+
+@media (max-width: 600px) {
+    .modal-content {
+        width: 95%;
+        max-width: none;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 1.25rem 1.25rem;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .modal-header h2 {
+        font-size: 1.125rem;
+    }
+
+    .icon-wrapper {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+
+    .modal-body {
+        padding: 1.25rem;
+    }
+
+    .time-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        padding: 1.25rem;
+    }
+
+    .action-buttons {
+        width: 100%;
+        flex-direction: column-reverse;
+    }
+
+    .modal-footer button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .delete-button {
+        width: 100%;
+        justify-content: center;
+    }
+}
