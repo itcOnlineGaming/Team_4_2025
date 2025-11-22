@@ -190,5 +190,5 @@
 {/if}
 
 <style>
-    @import './subtaskModal.css';
+    @import './subTaskModal.css';
 </style>
