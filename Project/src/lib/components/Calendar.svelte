@@ -246,7 +246,11 @@
                 startTimeInput,
                 endTimeInput,
                 titleInput,
-                descriptionInput
+                descriptionInput,
+                'pending',
+                majorTaskIdInput || undefined,
+                undefined,
+                priorityInput
             );
             subtasks.update(tasks => [...tasks, newSubtask]);
         } else if (selectedEvent) {
@@ -254,7 +258,9 @@
                 startTime: startTimeInput,
                 endTime: endTimeInput,
                 title: titleInput,
-                description: descriptionInput
+                description: descriptionInput,
+                majorTaskId: majorTaskIdInput || undefined,
+                priority: priorityInput
             });
         }
         showModal = false;
@@ -503,11 +509,14 @@
         <EventModal
                 {showModal}
                 {modalMode}
+                {selectedEvent}
                 bind:targetDate
                 bind:startTimeInput
                 bind:endTimeInput
                 bind:titleInput
                 bind:descriptionInput
+                bind:majorTaskIdInput
+                bind:priorityInput
                 onClose={handleModalClose}
                 onSave={handleModalSave}
                 onDelete={handleModalDelete}
