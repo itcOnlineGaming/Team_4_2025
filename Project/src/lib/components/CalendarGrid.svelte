@@ -127,7 +127,7 @@
 
     <div class="grid-body" bind:this={gridBodyElement} style="--pixels-per-hour: {pixelsPerHour}px; position: relative;">
         <!-- SVG overlay for subtask-major task lines -->
-        <svg id="subtask-major-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"></svg>
+        <svg id="subtask-major-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
         {#each timeSlots as timeSlot, timeIndex}
             <div class="time-row" style="height: {pixelsPerHour}px;">
                 <div class="time-slot">{timeSlot}</div>

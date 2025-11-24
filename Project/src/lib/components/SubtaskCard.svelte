@@ -261,6 +261,7 @@
             height: {height}px;
             width: 100%;
             pointer-events: auto;
+            z-index: 51;
         "
             use:dragSubtask
     >
@@ -303,6 +304,7 @@
         pointer-events: none;
         position: relative;
         height: 100%;
+        z-index: 51;
     }
 
     .subtask-positioner {
@@ -314,6 +316,7 @@
         -webkit-user-select: none;
         box-sizing: border-box;
         cursor: move;
+        z-index: 51;
     }
 
     .subtask-positioner.being-dragged {
@@ -330,7 +333,7 @@
         right: 8px;
         height: 10px;
         cursor: ns-resize;
-        z-index: 10;
+        z-index: 52;
         opacity: 0;
         transition: opacity 0.2s;
         border-radius: 4px;
@@ -375,6 +378,7 @@
         box-sizing: border-box;
         overflow: hidden;
         border-color: #333; /* fallback, overridden inline */
+        z-index: 51;
     }
 
     .linked-major-task {
@@ -421,6 +425,7 @@
         font-weight: bold;
         transition: all 0.2s;
         padding: 0;
+        z-index: 52;
     }
 
     .status-badge.completed {
@@ -453,6 +458,7 @@
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;
+        z-index: 52;
     }
 
     .subtask-title {
@@ -468,6 +474,7 @@
         text-align: left;
         word-break: break-word;
         hyphens: auto;
+        z-index: 52;
     }
 
     .subtask-positioner:hover .subtask-card {
