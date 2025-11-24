@@ -32,19 +32,6 @@
     // Override onSave to persist majorTaskIdInput
     function handleSave() {
         onSave();
-        //if (modalMode === 'create') {
-        //    // Call onSave, then handle majorTaskIdInput in parent
-        //    
-        //} else if (selectedEvent) {
-        //    updateSubtask(selectedEvent.id, {
-        //        startTime: startTimeInput,
-        //        endTime: endTimeInput,
-        //        title: titleInput,
-        //        description: descriptionInput,
-        //        majorTaskId: majorTaskIdInput
-        //    });
-        //    onClose();
-        //}
     }
 
     function handleOverlayKeydown(event: KeyboardEvent) {
@@ -130,9 +117,18 @@
             </div>
 
             <div class="modal-body">
-                <div class="date-badge">
-                    <span class="date-icon">📅</span>
-                    <span class="date-text">{formatDate(targetDate)}</span>
+                <div class="form-group">
+                    <label for="date">
+                        <span class="label-text">Date</span>
+                        <span class="label-required">*</span>
+                    </label>
+                    <input
+                        id="date"
+                        type="date"
+                        bind:value={targetDate}
+                        class="modal-input date-input"
+                        required
+                    />
                 </div>
 
                 <div class="form-group">
@@ -192,23 +188,24 @@
                         <span class="label-text">Description</span>
                         <span class="label-optional">(optional)</span>
                     </label>
-<textarea
-    id="description"
-    bind:value={descriptionInput}
-    placeholder="Add any additional details..."
-    class="modal-textarea"
-    rows="4"
-></textarea>
-<div class="form-group">
-    <label for="majorTaskDropdown">
-        <span class="label-text">Link to Major Task</span>
-    </label>
-    <select id="majorTaskDropdown" class="modal-input" bind:value={majorTaskIdInput}>
-        {#each $majorTasks as task}
-            <option value={task.id}>{task.title}</option>
-        {/each}
-    </select>
-</div>
+                    <textarea
+                        id="description"
+                        bind:value={descriptionInput}
+                        placeholder="Add any additional details..."
+                        class="modal-textarea"
+                        rows="4"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="majorTaskDropdown">
+                        <span class="label-text">Link to Major Task</span>
+                    </label>
+                    <select id="majorTaskDropdown" class="modal-input" bind:value={majorTaskIdInput}>
+                        {#each $majorTasks as task}
+                            <option value={task.id}>{task.title}</option>
+                        {/each}
+                    </select>
                 </div>
             </div>
 

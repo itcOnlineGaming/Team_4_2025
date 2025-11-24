@@ -166,13 +166,35 @@
             );
             subtasks.update(tasks => [...tasks, newSubtask]);
         } else if (selectedEvent) {
-            updateSubtask(selectedEvent.id, {
-                startTime: startTimeInput,
-                endTime: endTimeInput,
-                title: titleInput,
-                description: descriptionInput,
-                majorTaskId: majorTaskIdInput
-            });
+            // If date changed and task was completed, update daily activity
+            if (selectedEvent.status === 'completed' && selectedEvent.date !== targetDate) {
+                const duration = getSubtaskDuration(selectedEvent);
+                const completedOnDate = selectedEvent.completedOnDate || selectedEvent.date;
+                
+                // Remove from old date
+                addTimeToDate(completedOnDate, -duration);
+                // Add to new date
+                addTimeToDate(targetDate, duration);
+                
+                updateSubtask(selectedEvent.id, {
+                    date: targetDate,
+                    startTime: startTimeInput,
+                    endTime: endTimeInput,
+                    title: titleInput,
+                    description: descriptionInput,
+                    majorTaskId: majorTaskIdInput,
+                    completedOnDate: targetDate
+                });
+            } else {
+                updateSubtask(selectedEvent.id, {
+                    date: targetDate,
+                    startTime: startTimeInput,
+                    endTime: endTimeInput,
+                    title: titleInput,
+                    description: descriptionInput,
+                    majorTaskId: majorTaskIdInput
+                });
+            }
         }
         showModal = false;
     }
@@ -386,7 +408,7 @@
         <EventModal
                 {showModal}
                 {modalMode}
-                {targetDate}
+                bind:targetDate
                 bind:startTimeInput
                 bind:endTimeInput
                 bind:titleInput
