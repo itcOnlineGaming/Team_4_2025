@@ -2,7 +2,9 @@
     import CalendarGrid from './CalendarGrid.svelte';
     import EventModal from './EventModal.svelte';
     import MajorItemModal from './TIMELINE/MajorItemModal.svelte';
-    import MonthSidebar from './MonthSidebar.svelte';
+
+    import MonthCalendar from './MonthCalendar.svelte';
+    import ExternalSidebar from './ExternalSidebar.svelte';
     import {
         subtasks,
         createNewSubtask,
@@ -31,6 +33,26 @@
     let showAddOptions = false;
     let currentWeekStart = '';
 
+    // Month calendar state
+    let selectedDate = new Date();
+    let calendarViewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+
+    // External sidebar state (always visible, but collapsible)
+    let externalSidebarVisible = true;
+    let sidebarCollapsed = false;
+    
+    function handleSidebarToggle(event: CustomEvent<{ collapsed: boolean }>) {
+        sidebarCollapsed = event.detail.collapsed;
+    }
+    
+    // Sample data for the external sidebar
+    let sidebarItems = [
+        { id: 1, title: 'Review Calendar Integration', status: 'in-progress', priority: 'high', date: '2025-11-24' },
+        { id: 2, title: 'Update Sidebar Components', status: 'completed', priority: 'medium', date: '2025-11-23' },
+        { id: 3, title: 'Test External Package', status: 'pending', priority: 'high', date: '2025-11-25' },
+        { id: 4, title: 'Document Integration', status: 'pending', priority: 'low', date: '2025-11-26' },
+    ];
+
     // Zoom state: pixels per hour (default 60px = 1 hour)
     let pixelsPerHour = 60;
     const MIN_ZOOM = 30;
@@ -48,6 +70,29 @@
 
     // Calculate current week dates
     $: weekDates = getWeekDates(currentWeekOffset);
+
+    // Update currentWeekOffset when selectedDate changes (from month calendar)
+    $: if (selectedDate) {
+        const today = new Date();
+        const currentDay = today.getDay();
+        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+        const thisWeekMonday = new Date(today);
+        thisWeekMonday.setDate(today.getDate() + mondayOffset);
+        
+        // Find Monday of the selected date's week
+        const selectedDay = selectedDate.getDay();
+        const selectedMondayOffset = selectedDay === 0 ? -6 : 1 - selectedDay;
+        const selectedWeekMonday = new Date(selectedDate);
+        selectedWeekMonday.setDate(selectedDate.getDate() + selectedMondayOffset);
+        
+        // Calculate week difference
+        const diffMs = selectedWeekMonday.getTime() - thisWeekMonday.getTime();
+        const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+        
+        if (diffWeeks !== currentWeekOffset) {
+            currentWeekOffset = diffWeeks;
+        }
+    }
 
     // Calculate current week start for major tasks
     $: if (weekDates.length > 0) {
@@ -346,8 +391,28 @@
     }
 </script>
 
-<div class="calendar-shell">
-    <MonthSidebar selectedDate={new Date()}/>
+<div class="calendar-shell" class:collapsed={sidebarCollapsed}>
+    <!-- External Sidebar with Month Calendar inside -->
+    <ExternalSidebar 
+        bind:visible={externalSidebarVisible} 
+        title="Calendar & Tasks" 
+        items={sidebarItems}
+        on:toggle={handleSidebarToggle}
+    >
+        <div slot="calendar">
+            <MonthCalendar bind:selectedDate bind:viewDate={calendarViewDate} />
+        </div>
+        
+        <div slot="tasks">
+            <button class="action-btn">Add New Task</button>
+            <button class="action-btn">Export Tasks</button>
+            <button class="action-btn">Settings</button>
+        </div>
+        
+        <div slot="content">
+            <!-- This will show the filtered results -->
+        </div>
+    </ExternalSidebar>
 
     <div class="calendar-container">
         <div class="calendar-header">
@@ -355,6 +420,8 @@
             <button on:click={goToToday}>Today</button>
             <div class="week-display">{formatWeekRange(weekDates)}</div>
             <button on:click={nextWeek}>→</button>
+            
+
 
             <div class="zoom-controls">
                 <button on:click={zoomOut} title="Zoom out">−</button>
@@ -417,6 +484,18 @@
 </div>
 
 <style>
+    .calendar-shell {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        margin-left: 320px; /* Account for fixed sidebar */
+        transition: margin-left 0.3s ease;
+    }
+    
+    .calendar-shell.collapsed {
+        margin-left: 64px; /* Collapsed sidebar width */
+    }
+
     .calendar-container {
         background: #BEB8E9;
         border-radius: 12px;
@@ -442,9 +521,9 @@
         font-weight: 600;
     }
 
-    .calendar-header button:hover {
-        background: #f5f5f5;
-    }
+
+
+
 
     .week-display {
         flex: 1;
