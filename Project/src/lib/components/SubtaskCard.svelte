@@ -265,7 +265,7 @@
             use:dragSubtask
     >
         <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')}></div>
-        <div class="subtask-card" class:minimal={!showText} on:click={handleCardClick} role="button" tabindex="0"
+        <div class="subtask-card" id={"subtask-" + subtask.id} class:minimal={!showText} on:click={handleCardClick} role="button" tabindex="0"
             style="border-color: {majorTaskColor};">
             {#if showText}
                 <button class="status-badge {subtask.status || 'pending'}" on:click={handleStatusClick} type="button">
