@@ -14,12 +14,21 @@
     export let onStatusChange: (newStatus: 'pending' | 'completed' | 'cancelled') => void;
 
     // Get major task reference and color
-    let majorTask = null;
+    import type { MajorTask } from '../stores/majorTasks';
+
+    let majorTask: MajorTask | null = null;
     let majorTaskColor = '#333';
-    if (subtask.majorTaskId) {
-        majorTask = get(majorTasks).find(t => t.id === subtask.majorTaskId);
-        if (majorTask && majorTask.color) {
-            majorTaskColor = majorTask.color;
+    $: {
+        if (subtask.majorTaskId) {
+            majorTask = get(majorTasks).find((t: MajorTask) => t.id === subtask.majorTaskId) || null;
+            if (majorTask && majorTask.color) {
+                majorTaskColor = majorTask.color;
+            } else {
+                majorTaskColor = '#333';
+            }
+        } else {
+            majorTask = null;
+            majorTaskColor = '#333';
         }
     }
 

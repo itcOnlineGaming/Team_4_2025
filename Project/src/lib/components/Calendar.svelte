@@ -140,6 +140,7 @@
         endTimeInput = event.endTime;
         titleInput = event.title;
         descriptionInput = event.description;
+        majorTaskIdInput = event.majorTaskId || '';
         selectedEvent = event;
         showModal = true;
     }

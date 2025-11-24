@@ -16,28 +16,35 @@
     export let onDelete: () => void;
 
     // When opening modal, initialize majorTaskIdInput
-    $: if (showModal && modalMode === 'view' && selectedEvent) {
+    let initializedMajorTaskId = false;
+    $: if (showModal && modalMode === 'view' && selectedEvent && !initializedMajorTaskId) {
         majorTaskIdInput = selectedEvent.majorTaskId || '';
+        initializedMajorTaskId = true;
     }
-    $: if (showModal && modalMode === 'create' && $majorTasks.length > 0 && !majorTaskIdInput) {
+    $: if (!showModal) {
+        initializedMajorTaskId = false;
+    }
+    $: if (showModal && modalMode === 'create' && $majorTasks.length > 0 && !majorTaskIdInput && !initializedMajorTaskId) {
         majorTaskIdInput = $majorTasks[0].id;
+        initializedMajorTaskId = true;
     }
 
     // Override onSave to persist majorTaskIdInput
     function handleSave() {
-        if (modalMode === 'create') {
-            // Call onSave, then handle majorTaskIdInput in parent
-            onSave();
-        } else if (selectedEvent) {
-            updateSubtask(selectedEvent.id, {
-                startTime: startTimeInput,
-                endTime: endTimeInput,
-                title: titleInput,
-                description: descriptionInput,
-                majorTaskId: majorTaskIdInput
-            });
-            onClose();
-        }
+        onSave();
+        //if (modalMode === 'create') {
+        //    // Call onSave, then handle majorTaskIdInput in parent
+        //    
+        //} else if (selectedEvent) {
+        //    updateSubtask(selectedEvent.id, {
+        //        startTime: startTimeInput,
+        //        endTime: endTimeInput,
+        //        title: titleInput,
+        //        description: descriptionInput,
+        //        majorTaskId: majorTaskIdInput
+        //    });
+        //    onClose();
+        //}
     }
 
     function handleOverlayKeydown(event: KeyboardEvent) {
