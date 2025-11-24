@@ -1,4 +1,8 @@
 <script lang="ts">
+    import { majorTasks } from '../stores/majorTasks';
+    import { subtasks } from '../stores/subtasks';
+    import { get } from 'svelte/store';
+
     export let subtask: any;
     export let gridColumn: number;
     export let gridRow: number; // Keep for backwards compatibility but won't use
@@ -9,6 +13,18 @@
     export let onResize: (newStartMinutes: number, newEndMinutes: number) => void;
     export let onStatusChange: (newStatus: 'pending' | 'completed' | 'cancelled') => void;
 
+    // Get major task reference and color
+    let majorTask = null;
+    let majorTaskColor = '#333';
+    if (subtask.majorTaskId) {
+        majorTask = get(majorTasks).find(t => t.id === subtask.majorTaskId);
+        if (majorTask && majorTask.color) {
+            majorTaskColor = majorTask.color;
+        }
+    }
+
+    // Remove subtask linking logic
+    // Restore missing logic for positioning, resizing, dragging, and status handling
     const SNAP_INTERVAL = 15;
     const MIN_HEIGHT_FOR_TEXT = 30;
     const DRAG_THRESHOLD = 5;
@@ -240,7 +256,8 @@
             use:dragSubtask
     >
         <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')}></div>
-        <div class="subtask-card" class:minimal={!showText} on:click={handleCardClick} role="button" tabindex="0">
+        <div class="subtask-card" class:minimal={!showText} on:click={handleCardClick} role="button" tabindex="0"
+            style="border-color: {majorTaskColor};">
             {#if showText}
                 <button class="status-badge {subtask.status || 'pending'}" on:click={handleStatusClick} type="button">
                     {#if subtask.status === 'completed'}
@@ -254,6 +271,18 @@
                 <div class="subtask-content">
                     <span class="subtask-title">{subtask.title}</span>
                 </div>
+                {#if subtask.majorTaskId}
+                    <div class="linked-major-task">
+                        <span>Major Task:</span>
+                        <span class="linked-title">
+                            {#if majorTask}
+                                {majorTask.title}
+                            {:else}
+                                (not found)
+                            {/if}
+                        </span>
+                    </div>
+                {/if}
             {/if}
         </div>
         <div class="resize-handle resize-bottom" on:mousedown={(e) => handleResizeStart(e, 'bottom')}></div>
@@ -336,6 +365,23 @@
         -webkit-user-select: none;
         box-sizing: border-box;
         overflow: hidden;
+        border-color: #333; /* fallback, overridden inline */
+    }
+
+    .linked-major-task {
+        margin-top: 4px;
+        font-size: 0.7rem;
+        color: #555;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+    .linked-title {
+        background: #eee;
+        border-radius: 8px;
+        padding: 2px 6px;
+        margin-left: 2px;
+        font-size: 0.7rem;
     }
 
     @media (max-width: 768px) {

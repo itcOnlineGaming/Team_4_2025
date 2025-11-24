@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { majorTasks } from '../stores/majorTasks';
+    import { updateSubtask } from '../stores/subtasks';
     export let showModal: boolean = false;
     export let modalMode: 'create' | 'view' = 'create';
     export let targetDate: string = '';
@@ -6,10 +8,37 @@
     export let endTimeInput: string = '';
     export let titleInput: string = '';
     export let descriptionInput: string = '';
+    export let majorTaskIdInput: string = '';
+    export let selectedEvent: any = null;
 
     export let onClose: () => void;
     export let onSave: () => void;
     export let onDelete: () => void;
+
+    // When opening modal, initialize majorTaskIdInput
+    $: if (showModal && modalMode === 'view' && selectedEvent) {
+        majorTaskIdInput = selectedEvent.majorTaskId || '';
+    }
+    $: if (showModal && modalMode === 'create' && $majorTasks.length > 0 && !majorTaskIdInput) {
+        majorTaskIdInput = $majorTasks[0].id;
+    }
+
+    // Override onSave to persist majorTaskIdInput
+    function handleSave() {
+        if (modalMode === 'create') {
+            // Call onSave, then handle majorTaskIdInput in parent
+            onSave();
+        } else if (selectedEvent) {
+            updateSubtask(selectedEvent.id, {
+                startTime: startTimeInput,
+                endTime: endTimeInput,
+                title: titleInput,
+                description: descriptionInput,
+                majorTaskId: majorTaskIdInput
+            });
+            onClose();
+        }
+    }
 
     function handleOverlayKeydown(event: KeyboardEvent) {
         if (event.key === 'Escape') {
@@ -156,13 +185,23 @@
                         <span class="label-text">Description</span>
                         <span class="label-optional">(optional)</span>
                     </label>
-                    <textarea
-                        id="description"
-                        bind:value={descriptionInput}
-                        placeholder="Add any additional details..."
-                        class="modal-textarea"
-                        rows="4"
-                    ></textarea>
+<textarea
+    id="description"
+    bind:value={descriptionInput}
+    placeholder="Add any additional details..."
+    class="modal-textarea"
+    rows="4"
+></textarea>
+<div class="form-group">
+    <label for="majorTaskDropdown">
+        <span class="label-text">Link to Major Task</span>
+    </label>
+    <select id="majorTaskDropdown" class="modal-input" bind:value={majorTaskIdInput}>
+        {#each $majorTasks as task}
+            <option value={task.id}>{task.title}</option>
+        {/each}
+    </select>
+</div>
                 </div>
             </div>
 
@@ -177,7 +216,7 @@
                     <button class="cancel-button" on:click={onClose}>
                         Cancel
                     </button>
-                    <button class="save-button" on:click={onSave}>
+                    <button class="save-button" on:click={handleSave}>
                         <span class="button-icon">
                             {modalMode === 'create' ? '✓' : '💾'}
                         </span>

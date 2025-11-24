@@ -9,6 +9,8 @@ export interface Subtask {
     description: string;
     status: 'pending' | 'completed' | 'cancelled';
     completedOnDate?: string; // Track which date it was completed on
+    majorTaskId?: string; // Associated major task
+    linkedSubtaskIds?: number[]; // Linked minor tasks
 }
 
 // LocalStorage keys
@@ -83,7 +85,9 @@ export function createNewSubtask(
     endTime: string,
     title?: string,
     description?: string,
-    status: 'pending' | 'completed' | 'cancelled' = 'pending'
+    status: 'pending' | 'completed' | 'cancelled' = 'pending',
+    majorTaskId?: string,
+    linkedSubtaskIds?: number[]
 ): Subtask {
     const id = generateSubtaskId();
 
@@ -94,7 +98,9 @@ export function createNewSubtask(
         endTime,
         title: title || `Subtask #${id}`,
         description: description || '',
-        status
+        status,
+        majorTaskId,
+        linkedSubtaskIds: linkedSubtaskIds || []
     };
 }
 

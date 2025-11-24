@@ -30,6 +30,7 @@
     let descriptionInput = '';
     let showAddOptions = false;
     let currentWeekStart = '';
+    let majorTaskIdInput = '';
 
     // Zoom state: pixels per hour (default 60px = 1 hour)
     let pixelsPerHour = 60;
@@ -158,7 +159,9 @@
                 startTimeInput,
                 endTimeInput,
                 titleInput,
-                descriptionInput
+                descriptionInput,
+                'pending',
+                majorTaskIdInput
             );
             subtasks.update(tasks => [...tasks, newSubtask]);
         } else if (selectedEvent) {
@@ -166,7 +169,8 @@
                 startTime: startTimeInput,
                 endTime: endTimeInput,
                 title: titleInput,
-                description: descriptionInput
+                description: descriptionInput,
+                majorTaskId: majorTaskIdInput
             });
         }
         showModal = false;
@@ -386,6 +390,7 @@
                 bind:endTimeInput
                 bind:titleInput
                 bind:descriptionInput
+                bind:majorTaskIdInput
                 onClose={handleModalClose}
                 onSave={handleModalSave}
                 onDelete={handleModalDelete}
