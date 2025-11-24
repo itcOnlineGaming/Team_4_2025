@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { afterUpdate } from 'svelte';
     import './style.css';
     export let weekDates: Date[];
     export let timeSlots: string[];
@@ -65,6 +66,48 @@
     function handleSubtaskCardClick(subtask: any) {
         onSubtaskClick(subtask);
     }
+
+    // Draw lines from each subtask to its major task
+    afterUpdate(() => {
+        const svg = document.getElementById('subtask-major-lines');
+        if (!svg) return;
+        // Clear previous lines
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+        Object.values(eventsIndex).forEach((subtask: any) => {
+            if (!subtask.majorTaskId) return;
+            const subtaskEl = document.getElementById('subtask-' + subtask.id);
+            const majorTaskEl = document.getElementById('major-task-' + subtask.majorTaskId);
+            if (!subtaskEl || !majorTaskEl) return;
+
+            // Get bounding boxes
+            const subRect = subtaskEl.getBoundingClientRect();
+            const majorRect = majorTaskEl.getBoundingClientRect();
+            const svgRect = svg.getBoundingClientRect();
+
+            // Calculate start (subtask) and end (major task) points relative to SVG
+            const startX = subRect.left + subRect.width / 2 - svgRect.left;
+            const startY = subRect.top + subRect.height / 2 - svgRect.top;
+            const endX = majorRect.left + majorRect.width / 2 - svgRect.left;
+            const endY = majorRect.top + majorRect.height / 2 - svgRect.top;
+
+            // Get major task color from computed style
+            const computedStyle = window.getComputedStyle(majorTaskEl);
+            const color = computedStyle.backgroundColor || '#333';
+
+            // Create SVG line
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', startX.toString());
+            line.setAttribute('y1', startY.toString());
+            line.setAttribute('x2', endX.toString());
+            line.setAttribute('y2', endY.toString());
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', '2');
+            line.setAttribute('opacity', '0.6');
+            line.setAttribute('pointer-events', 'none');
+            svg.appendChild(line);
+        });
+    });
 </script>
 
 <div class="calendar-grid">
@@ -82,7 +125,7 @@
 
     <TimeLine {weekDates} />
 
-    <div class="grid-body" bind:this={gridBodyElement} style="--pixels-per-hour: {pixelsPerHour}px;">
+    <div class="grid-body" bind:this={gridBodyElement} style="--pixels-per-hour: {pixelsPerHour}px; position: relative;">
         {#each timeSlots as timeSlot, timeIndex}
             <div class="time-row" style="height: {pixelsPerHour}px;">
                 <div class="time-slot">{timeSlot}</div>
@@ -125,6 +168,9 @@
             {/each}
         </div>
     </div>
+    
+    <!-- SVG overlay for subtask-major task lines - positioned outside grid-body to span entire calendar -->
+    <svg id="subtask-major-lines" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 100;"></svg>
 </div>
 
 <style>

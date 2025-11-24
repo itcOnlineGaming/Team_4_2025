@@ -33,6 +33,7 @@
     let priorityInput: 'high' | 'medium' | 'low' = 'medium';
     let showAddOptions = false;
     let currentWeekStart = '';
+    let majorTaskIdInput = '';
 
     // Month calendar state
     let selectedDate = new Date();
@@ -226,7 +227,6 @@
         endTimeInput = event.endTime;
         titleInput = event.title;
         descriptionInput = event.description;
-        priorityInput = event.priority;
         selectedEvent = event;
         showModal = true;
     }
@@ -246,9 +246,7 @@
                 startTimeInput,
                 endTimeInput,
                 titleInput,
-                descriptionInput,
-                'pending',
-                priorityInput
+                descriptionInput
             );
             subtasks.update(tasks => [...tasks, newSubtask]);
         } else if (selectedEvent) {
@@ -256,8 +254,7 @@
                 startTime: startTimeInput,
                 endTime: endTimeInput,
                 title: titleInput,
-                description: descriptionInput,
-                priority: priorityInput
+                description: descriptionInput
             });
         }
         showModal = false;
@@ -506,12 +503,11 @@
         <EventModal
                 {showModal}
                 {modalMode}
-                {targetDate}
+                bind:targetDate
                 bind:startTimeInput
                 bind:endTimeInput
                 bind:titleInput
                 bind:descriptionInput
-                bind:priorityInput
                 onClose={handleModalClose}
                 onSave={handleModalSave}
                 onDelete={handleModalDelete}

@@ -44,6 +44,7 @@
 
 <div 
     class="major-task-bar"
+    id={"major-task-" + id}
     class:hovered={isHovered}
     style="background-color: {color}; grid-column: {gridColumnStart} / {gridColumnEnd};"
     on:mouseenter={handleMouseEnter}

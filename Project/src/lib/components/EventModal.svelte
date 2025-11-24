@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { majorTasks } from '../stores/majorTasks';
+    import { updateSubtask } from '../stores/subtasks';
     export let showModal: boolean = false;
     export let modalMode: 'create' | 'view' = 'create';
     export let targetDate: string = '';
@@ -6,11 +8,32 @@
     export let endTimeInput: string = '';
     export let titleInput: string = '';
     export let descriptionInput: string = '';
+    export let majorTaskIdInput: string = '';
+    export let selectedEvent: any = null;
     export let priorityInput: 'high' | 'medium' | 'low' = 'medium';
 
     export let onClose: () => void;
     export let onSave: () => void;
     export let onDelete: () => void;
+
+    // When opening modal, initialize majorTaskIdInput
+    let initializedMajorTaskId = false;
+    $: if (showModal && modalMode === 'view' && selectedEvent && !initializedMajorTaskId) {
+        majorTaskIdInput = selectedEvent.majorTaskId || '';
+        initializedMajorTaskId = true;
+    }
+    $: if (!showModal) {
+        initializedMajorTaskId = false;
+    }
+    $: if (showModal && modalMode === 'create' && $majorTasks.length > 0 && !majorTaskIdInput && !initializedMajorTaskId) {
+        majorTaskIdInput = $majorTasks[0].id;
+        initializedMajorTaskId = true;
+    }
+
+    // Override onSave to persist majorTaskIdInput
+    function handleSave() {
+        onSave();
+    }
 
     function handleOverlayKeydown(event: KeyboardEvent) {
         if (event.key === 'Escape') {
@@ -95,9 +118,18 @@
             </div>
 
             <div class="modal-body">
-                <div class="date-badge">
-                    <span class="date-icon">📅</span>
-                    <span class="date-text">{formatDate(targetDate)}</span>
+                <div class="form-group">
+                    <label for="date">
+                        <span class="label-text">Date</span>
+                        <span class="label-required">*</span>
+                    </label>
+                    <input
+                        id="date"
+                        type="date"
+                        bind:value={targetDate}
+                        class="modal-input date-input"
+                        required
+                    />
                 </div>
 
                 <div class="form-group">
@@ -180,6 +212,17 @@
                         rows="4"
                     ></textarea>
                 </div>
+
+                <div class="form-group">
+                    <label for="majorTaskDropdown">
+                        <span class="label-text">Link to Major Task</span>
+                    </label>
+                    <select id="majorTaskDropdown" class="modal-input" bind:value={majorTaskIdInput}>
+                        {#each $majorTasks as task}
+                            <option value={task.id}>{task.title}</option>
+                        {/each}
+                    </select>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -193,7 +236,7 @@
                     <button class="cancel-button" on:click={onClose}>
                         Cancel
                     </button>
-                    <button class="save-button" on:click={onSave}>
+                    <button class="save-button" on:click={handleSave}>
                         <span class="button-icon">
                             {modalMode === 'create' ? '✓' : '💾'}
                         </span>

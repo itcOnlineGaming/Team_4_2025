@@ -1,4 +1,8 @@
 <script lang="ts">
+    import { majorTasks } from '../stores/majorTasks';
+    import { subtasks } from '../stores/subtasks';
+    import { get } from 'svelte/store';
+
     export let subtask: any;
     export let gridColumn: number;
     export const gridRow: number = 1; // Keep for backwards compatibility but won't use
@@ -9,6 +13,27 @@
     export let onResize: (newStartMinutes: number, newEndMinutes: number) => void;
     export let onStatusChange: (newStatus: 'pending' | 'completed' | 'cancelled') => void;
 
+    // Get major task reference and color
+    import type { MajorTask } from '../stores/majorTasks';
+
+    let majorTask: MajorTask | null = null;
+    let majorTaskColor = '#333';
+    $: {
+        if (subtask.majorTaskId) {
+            majorTask = get(majorTasks).find((t: MajorTask) => t.id === subtask.majorTaskId) || null;
+            if (majorTask && majorTask.color) {
+                majorTaskColor = majorTask.color;
+            } else {
+                majorTaskColor = '#333';
+            }
+        } else {
+            majorTask = null;
+            majorTaskColor = '#333';
+        }
+    }
+
+    // Remove subtask linking logic
+    // Restore missing logic for positioning, resizing, dragging, and status handling
     const SNAP_INTERVAL = 15;
     const MIN_HEIGHT_FOR_TEXT = 20;
     const DRAG_THRESHOLD = 5;
@@ -236,11 +261,13 @@
             height: {height}px;
             width: 100%;
             pointer-events: auto;
+            z-index: 51;
         "
             use:dragSubtask
     >
         <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')} role="button" tabindex="0" aria-label="Resize top"></div>
-        <div class="subtask-card" class:minimal={!showText} on:click={handleCardClick} on:keydown={(e) => e.key === 'Enter' && handleCardClick()} role="button" tabindex="0">
+        <div class="subtask-card" id={"subtask-" + subtask.id} class:minimal={!showText} on:click={handleCardClick} on:keydown={(e) => e.key === 'Enter' && handleCardClick()} role="button" tabindex="0"
+            style="border-color: {majorTaskColor};">
             <div class="task-badges">
                 <div class="priority-badge {subtask.priority || 'medium'}">
                     {#if subtask.priority === 'high'}
@@ -265,6 +292,18 @@
                 <div class="subtask-content">
                     <span class="subtask-title">{subtask.title}</span>
                 </div>
+                {#if subtask.majorTaskId}
+                    <div class="linked-major-task">
+                        <span>Major Task:</span>
+                        <span class="linked-title">
+                            {#if majorTask}
+                                {majorTask.title}
+                            {:else}
+                                (not found)
+                            {/if}
+                        </span>
+                    </div>
+                {/if}
             {/if}
         </div>
         <div class="resize-handle resize-bottom" on:mousedown={(e) => handleResizeStart(e, 'bottom')} role="button" tabindex="0" aria-label="Resize bottom"></div>
@@ -276,6 +315,7 @@
         pointer-events: none;
         position: relative;
         height: 100%;
+        z-index: 51;
     }
 
     .subtask-positioner {
@@ -287,6 +327,7 @@
         -webkit-user-select: none;
         box-sizing: border-box;
         cursor: move;
+        z-index: 51;
     }
 
     .subtask-positioner.being-dragged {
@@ -303,7 +344,7 @@
         right: 8px;
         height: 10px;
         cursor: ns-resize;
-        z-index: 10;
+        z-index: 52;
         opacity: 0;
         transition: opacity 0.2s;
         border-radius: 4px;
@@ -347,7 +388,6 @@
         -webkit-user-select: none;
         box-sizing: border-box;
         overflow: hidden;
-        min-height: 40px;
     }
 
     @media (max-width: 768px) {
@@ -422,6 +462,7 @@
         font-weight: bold;
         transition: all 0.2s;
         padding: 0;
+        z-index: 52;
     }
 
     .status-badge.completed {
@@ -455,6 +496,7 @@
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;
+        z-index: 52;
     }
 
     .subtask-title {
@@ -471,20 +513,6 @@
         text-align: left;
         word-break: break-word;
         hyphens: auto;
-        color: #333;
-        font-weight: 500;
-    }
-
-    /* Larger text when sidebar is collapsed (maximized view) */
-    :global(.collapsed) .subtask-title {
-        font-size: 0.8rem;
-        line-height: 1.3;
-        -webkit-line-clamp: 5;
-        line-clamp: 5;
-    }
-
-    :global(.collapsed) .subtask-content {
-        padding-right: 42px; /* Slightly more space for larger text */
     }
 
     .subtask-positioner:hover .subtask-card {
