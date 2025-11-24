@@ -10,6 +10,7 @@
     let description = '';
     let selectedColor = '';
     let selectedDays = new Set<number>();
+    let priority: 'high' | 'medium' | 'low' = 'medium';
     let showColorPicker = false;
     let customColor = '#ff0000';
     let errors: string[] = [];
@@ -93,7 +94,8 @@
                 color: selectedColor,
                 startDay: sortedDays[0],
                 endDay: sortedDays[sortedDays.length - 1],
-                selectedDays: sortedDays
+                selectedDays: sortedDays,
+                priority
             };
             
             dispatch('create', taskData);
@@ -107,6 +109,7 @@
         description = '';
         selectedColor = '';
         selectedDays = new Set();
+        priority = 'medium';
         showColorPicker = false;
         errors = [];
     }
@@ -211,6 +214,21 @@
                         class="form-textarea"
                         rows="3"
                     ></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="task-priority">
+                        <span class="label-text">Priority</span>
+                    </label>
+                    <select
+                        id="task-priority"
+                        bind:value={priority}
+                        class="form-select"
+                    >
+                        <option value="high">🔴 High</option>
+                        <option value="medium">🟡 Medium</option>
+                        <option value="low">🟢 Low</option>
+                    </select>
                 </div>
                 
                 <div class="form-group">

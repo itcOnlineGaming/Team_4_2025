@@ -30,6 +30,7 @@
     let endTimeInput = '';
     let titleInput = '';
     let descriptionInput = '';
+    let priorityInput: 'high' | 'medium' | 'low' = 'medium';
     let showAddOptions = false;
     let currentWeekStart = '';
 
@@ -45,13 +46,53 @@
         sidebarCollapsed = event.detail.collapsed;
     }
     
-    // Sample data for the external sidebar
-    let sidebarItems = [
-        { id: 1, title: 'Review Calendar Integration', status: 'in-progress', priority: 'high', date: '2025-11-24' },
-        { id: 2, title: 'Update Sidebar Components', status: 'completed', priority: 'medium', date: '2025-11-23' },
-        { id: 3, title: 'Test External Package', status: 'pending', priority: 'high', date: '2025-11-25' },
-        { id: 4, title: 'Document Integration', status: 'pending', priority: 'low', date: '2025-11-26' },
-    ];
+    // Transform subtasks for sidebar filtering
+    $: sidebarItems = $subtasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        priority: task.priority,
+        date: task.date,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        description: task.description
+    }));
+
+    // Sidebar filtering state
+    let filteredSubtasks: Subtask[] = [];
+    let sidebarSelectedFilters: Record<string, string[]> = {};
+    let sidebarSelectedSortId: string | null = null;
+    let filteredItems: any[] = [];
+
+    // Apply sidebar filters to subtasks and update what's displayed in calendar
+    $: {
+        let filtered = [...$subtasks];
+        
+        // Apply status filter
+        if (sidebarSelectedFilters.status && sidebarSelectedFilters.status.length > 0) {
+            filtered = filtered.filter(task => sidebarSelectedFilters.status.includes(task.status));
+        }
+        
+        // Apply priority filter
+        if (sidebarSelectedFilters.priority && sidebarSelectedFilters.priority.length > 0) {
+            filtered = filtered.filter(task => sidebarSelectedFilters.priority.includes(task.priority));
+        }
+        
+        // Apply sorting
+        if (sidebarSelectedSortId) {
+            if (sidebarSelectedSortId === 'date') {
+                filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            } else if (sidebarSelectedSortId === 'status') {
+                const statusOrder = { 'pending': 0, 'completed': 1, 'cancelled': 2 };
+                filtered.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+            } else if (sidebarSelectedSortId === 'priority') {
+                const priorityOrder = { 'high': 0, 'medium': 1, 'low': 2 };
+                filtered.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+            }
+        }
+        
+        filteredSubtasks = filtered;
+    }
 
     // Zoom state: pixels per hour (default 60px = 1 hour)
     let pixelsPerHour = 60;
@@ -99,10 +140,10 @@
         currentWeekStart = getWeekStart(weekDates[0]);
     }
 
-    // Build events index from store
+    // Build events index from filtered subtasks
     $: {
         eventsIndex = {};
-        $subtasks.forEach(event => {
+        filteredSubtasks.forEach(event => {
             const key = `${event.date}|${event.startTime}`;
             eventsIndex[key] = event;
         });
@@ -172,6 +213,7 @@
         endTimeInput = endTime;
         titleInput = '';
         descriptionInput = '';
+        priorityInput = 'medium';
         selectedEvent = null;
         showModal = true;
     }
@@ -184,6 +226,7 @@
         endTimeInput = event.endTime;
         titleInput = event.title;
         descriptionInput = event.description;
+        priorityInput = event.priority;
         selectedEvent = event;
         showModal = true;
     }
@@ -203,7 +246,9 @@
                 startTimeInput,
                 endTimeInput,
                 titleInput,
-                descriptionInput
+                descriptionInput,
+                'pending',
+                priorityInput
             );
             subtasks.update(tasks => [...tasks, newSubtask]);
         } else if (selectedEvent) {
@@ -211,7 +256,8 @@
                 startTime: startTimeInput,
                 endTime: endTimeInput,
                 title: titleInput,
-                description: descriptionInput
+                description: descriptionInput,
+                priority: priorityInput
             });
         }
         showModal = false;
@@ -337,7 +383,8 @@
                 taskData.description,
                 taskData.color,
                 taskData.startDay,
-                taskData.endDay
+                taskData.endDay,
+                taskData.priority
             );
             majorTasks.update(tasks => [...tasks, newTask]);
         }
@@ -397,20 +444,31 @@
         bind:visible={externalSidebarVisible} 
         title="Calendar & Tasks" 
         items={sidebarItems}
+        bind:selectedFilters={sidebarSelectedFilters}
+        bind:selectedSortId={sidebarSelectedSortId}
+        bind:filteredItems
         on:toggle={handleSidebarToggle}
     >
         <div slot="calendar">
             <MonthCalendar bind:selectedDate bind:viewDate={calendarViewDate} />
         </div>
         
-        <div slot="tasks">
-            <button class="action-btn">Add New Task</button>
-            <button class="action-btn">Export Tasks</button>
-            <button class="action-btn">Settings</button>
-        </div>
-        
         <div slot="content">
-            <!-- This will show the filtered results -->
+            <!-- Filtered Results Summary -->
+            <div class="filter-results">
+                <p><strong>{filteredSubtasks.length}</strong> of <strong>{$subtasks.length}</strong> tasks shown</p>
+                {#if filteredSubtasks.length > 0}
+                    <div class="task-summary">
+                        <div class="status-counts">
+                            <div>Pending: {filteredSubtasks.filter(t => t.status === 'pending').length}</div>
+                            <div>Completed: {filteredSubtasks.filter(t => t.status === 'completed').length}</div>
+                            <div>Cancelled: {filteredSubtasks.filter(t => t.status === 'cancelled').length}</div>
+                        </div>
+                    </div>
+                {:else}
+                    <p class="no-results">No tasks match the current filters.</p>
+                {/if}
+            </div>
         </div>
     </ExternalSidebar>
 
@@ -453,6 +511,7 @@
                 bind:endTimeInput
                 bind:titleInput
                 bind:descriptionInput
+                bind:priorityInput
                 onClose={handleModalClose}
                 onSave={handleModalSave}
                 onDelete={handleModalDelete}
@@ -630,5 +689,32 @@
             opacity: 1;
             transform: translateY(0);
         }
+    }
+
+    /* Filter Results Styling */
+    .filter-results {
+        font-size: 0.85rem;
+        color: #4e3d67;
+    }
+
+    .filter-results p {
+        margin: 0.5rem 0;
+    }
+
+    .task-summary {
+        margin-top: 0.75rem;
+    }
+
+    .status-counts {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    .no-results {
+        color: #999;
+        font-style: italic;
     }
 </style>

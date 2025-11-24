@@ -8,6 +8,7 @@ export interface MajorTask {
   startDay: number; // 1-7 (Mon-Sun)
   endDay: number;   // 1-7 (Mon-Sun)
   weekStart: string; // ISO date string for Monday of the week
+  priority: 'high' | 'medium' | 'low';
 }
 
 // LocalStorage keys
@@ -87,7 +88,8 @@ export function createNewTask(
   description?: string,
   color?: string,
   startDay?: number,
-  endDay?: number
+  endDay?: number,
+  priority: 'high' | 'medium' | 'low' = 'medium'
 ): MajorTask {
   const id = generateTaskId();
   const finalTitle = title ? `${title} #${id}` : `Sample Task #${id}`;
@@ -99,7 +101,8 @@ export function createNewTask(
     color: color || 'red',
     startDay: startDay || 1, // Monday
     endDay: endDay || 3,     // Wednesday
-    weekStart
+    weekStart,
+    priority
   };
 }
 

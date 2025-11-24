@@ -42,12 +42,6 @@
                 </div>
             </div>
             
-            <div slot="tasks">
-                <button class="action-btn">➕ Add New Task</button>
-                <button class="action-btn">📤 Export Tasks</button>
-                <button class="action-btn">⚙️ Settings</button>
-            </div>
-            
             <div slot="content">
                 <div class="stats">
                     <h5>📊 Quick Stats</h5>

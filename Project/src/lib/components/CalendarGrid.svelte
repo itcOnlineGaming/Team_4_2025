@@ -6,7 +6,7 @@
     export let daysOfWeek: string[];
     export let eventsIndex: Record<string, any>;
     export let pixelsPerHour: number;
-    export let handleCellClick: (date: string, time: string) => void;
+    export const handleCellClick: (date: string, time: string) => void = () => {};
     export let formatDate: (date: Date) => string;
     export let isToday: (date: Date) => boolean;
     export let onEventMove: (from: {date: string, time: string}, to: {date: string, time: string}) => void;
@@ -95,6 +95,8 @@
                             class:past-cell={isPastDate(date)}
                             class:drop-target={draggedSubtaskKey && key !== draggedFromKey && !eventsIndex[key]}
                             on:mouseup={() => handleCellDrop(dateStr, timeSlot)}
+                            role="gridcell"
+                            tabindex="-1"
                     >
                         <!-- Empty timeline cell -->
                     </div>

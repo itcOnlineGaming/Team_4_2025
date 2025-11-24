@@ -11,6 +11,11 @@
     export let filterGroups: FilterGroup[] = [];
     export let sortOptions: SortOption[] = [];
     
+    // Exported state for filtering and sorting (so parent can bind to them)
+    export let selectedFilters: Record<string, string[]> = {};
+    export let selectedSortId: string | null = null;
+    export let filteredItems: any[] = [];
+    
     // Track collapsed state
     let collapsed = false;
     const dispatch = createEventDispatcher();
@@ -20,10 +25,15 @@
         dispatch('toggle', { collapsed });
     }
     
-    // State for filtering and sorting
-    let selectedFilters: Record<string, string[]> = {};
-    let selectedSortId: string | null = null;
-    let filteredItems: any[] = [];
+    function toggleFilter(groupId: string, value: string) {
+        const current = selectedFilters[groupId] || [];
+        if (current.includes(value)) {
+            selectedFilters[groupId] = current.filter(v => v !== value);
+        } else {
+            selectedFilters[groupId] = [...current, value];
+        }
+        selectedFilters = { ...selectedFilters };
+    }
     
     // Example filter groups and sort options for tasks
     $: if (!filterGroups.length) {
@@ -31,6 +41,7 @@
             {
                 id: 'status',
                 label: 'Status',
+                icon: '📋',
                 options: [
                     { value: 'pending', label: 'Pending' },
                     { value: 'in-progress', label: 'In Progress' },
@@ -40,6 +51,7 @@
             {
                 id: 'priority',
                 label: 'Priority',
+                icon: '🔥',
                 options: [
                     { value: 'high', label: 'High' },
                     { value: 'medium', label: 'Medium' },
@@ -51,9 +63,9 @@
     
     $: if (!sortOptions.length) {
         sortOptions = [
-            { id: 'date', label: 'Date' },
-            { id: 'priority', label: 'Priority' },
-            { id: 'status', label: 'Status' }
+            { id: 'date', label: 'Date', icon: '📑' },
+            { id: 'priority', label: 'Priority', icon: '🔥' },
+            { id: 'status', label: 'Status', icon: '📋' }
         ];
     }
 </script>
@@ -71,8 +83,9 @@
             bind:filteredItems
             on:toggle={handleToggle}
         >
-            <!-- Custom Calendar and Tasks sections that show as icons when collapsed -->
+            <!-- Custom sections that show as icons when collapsed -->
             <div class="custom-sections">
+
                 <!-- Calendar Section -->
                 <div class="custom-section calendar-section">
                     <div class="section-header">
@@ -90,29 +103,29 @@
                     </div>
                 </div>
 
-                <!-- Tasks Section -->
-                <div class="custom-section tasks-section">
+                <!-- Help Section -->
+                <div class="custom-section help-section">
                     <div class="section-header">
                         <!-- Icon only visible when collapsed -->
-                        <div class="collapsed-icon tasks-icon" title="Tasks">
-                            📋
+                        <div class="collapsed-icon help-icon" title="Help">
+                            ❓
                         </div>
                         <!-- Title only visible when expanded -->
-                        <h3 class="section-title">Tasks</h3>
+                        <h3 class="section-title">Help</h3>
                     </div>
                     <div class="section-content">
-                        <slot name="tasks">
-                            <!-- Task actions will go here -->
-                        </slot>
+                        <div class="help-actions">
+                            <button class="action-btn">📖 User Guide</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Filtered Results Section -->
+                <!-- Results Section -->
                 <div class="custom-section results-section">
                     <div class="section-header">
                         <!-- Icon only visible when collapsed -->
-                        <div class="collapsed-icon results-icon" title="Results">
-                            📊
+                        <div class="collapsed-icon results-icon" title="Filtered Results">
+                            🔍
                         </div>
                         <!-- Title only visible when expanded -->
                         <h3 class="section-title">Results</h3>
@@ -120,15 +133,26 @@
                     <div class="section-content">
                         <slot name="content">
                             <div class="default-content">
-                                <p>Items: {filteredItems.length}</p>
+                                <p class="results-count">📋 {filteredItems.length} items match filters</p>
                                 {#if filteredItems.length > 0}
-                                    <ul>
+                                    <ul class="results-list">
                                         {#each filteredItems.slice(0, 5) as item}
-                                            <li>{item.title || item.name || JSON.stringify(item)}</li>
+                                            <li class="result-item">
+                                                <span class="item-priority {item.priority || 'medium'}">
+                                                    {#if item.priority === 'high'}🔴{:else if item.priority === 'low'}🟢{:else}🟡{/if}
+                                                </span>
+                                                <span class="item-title">{item.title || item.name || 'Untitled'}</span>
+                                                <span class="item-status {item.status || 'pending'}">
+                                                    {#if item.status === 'completed'}✅{:else if item.status === 'cancelled'}❌{:else}⏳{/if}
+                                                </span>
+                                            </li>
                                         {/each}
+                                        {#if filteredItems.length > 5}
+                                            <li class="more-items">...and {filteredItems.length - 5} more</li>
+                                        {/if}
                                     </ul>
                                 {:else}
-                                    <p>No items match the current filters.</p>
+                                    <p class="no-results">🔍 No items match the current filters.</p>
                                 {/if}
                             </div>
                         </slot>
@@ -261,6 +285,7 @@
 
     :global(.month-sidebar.collapsed) .collapsed-icon {
         display: flex; /* Show icons when collapsed */
+        margin-bottom: 8px;
     }
 
     :global(.month-sidebar.collapsed) .section-content {
@@ -269,15 +294,101 @@
 
     :global(.month-sidebar.collapsed) .section-header {
         justify-content: center;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0;
     }
 
     :global(.month-sidebar.collapsed) .custom-section {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0;
+        padding: 0;
+    }
+
+    /* Better spacing for expanded sections */
+    .custom-section {
+        margin-bottom: 1.5rem;
+        padding: 0.5rem 0;
+    }
+
+    .custom-section:not(:last-child) {
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 1rem;
     }
     
 
     
+    /* Help Actions */
+    .help-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    /* Results Section */
+    .results-count {
+        margin: 0 0 0.75rem 0;
+        font-weight: 600;
+        color: #4e3d67;
+        font-size: 0.85rem;
+    }
+
+    .results-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .result-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: #f9f7ff;
+        border: 1px solid #e8dff5;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+
+    .item-priority {
+        flex-shrink: 0;
+        font-size: 0.7rem;
+    }
+
+    .item-title {
+        flex: 1;
+        color: #4e3d67;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .item-status {
+        flex-shrink: 0;
+        font-size: 0.7rem;
+    }
+
+    .more-items {
+        padding: 0.5rem;
+        text-align: center;
+        color: #8c62cf;
+        font-size: 0.75rem;
+        font-style: italic;
+    }
+
+    .no-results {
+        margin: 0;
+        padding: 1rem;
+        text-align: center;
+        color: #8c62cf;
+        font-size: 0.8rem;
+        background: #f9f7ff;
+        border: 1px solid #e8dff5;
+        border-radius: 6px;
+    }
+
+    /* Legacy styles for backward compatibility */
     .default-content ul {
         list-style: none;
         padding: 0;

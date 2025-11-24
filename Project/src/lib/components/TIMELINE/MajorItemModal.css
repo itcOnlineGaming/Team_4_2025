@@ -210,7 +210,8 @@
 
 /* Form Inputs */
 .form-input,
-.form-textarea {
+.form-textarea,
+.form-select {
     width: 100%;
     padding: 0.875rem 1rem;
     border: 2px solid #d9cce7;
@@ -223,8 +224,13 @@
     box-sizing: border-box;
 }
 
+.form-select {
+    cursor: pointer;
+}
+
 .form-input:focus,
-.form-textarea:focus {
+.form-textarea:focus,
+.form-select:focus {
     outline: none;
     border-color: #8c62cf;
     box-shadow: 0 0 0 3px rgba(140, 98, 207, 0.15);

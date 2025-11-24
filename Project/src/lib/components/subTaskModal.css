@@ -196,6 +196,26 @@
     color: #b0a3c4;
 }
 
+.modal-select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #d9cce7;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: white;
+    color: #333;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.modal-select:focus {
+    outline: none;
+    border-color: #8c62cf;
+    box-shadow: 0 0 0 3px rgba(140, 98, 207, 0.15);
+}
+
 .time-input {
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;

@@ -8,6 +8,7 @@ export interface Subtask {
     title: string;
     description: string;
     status: 'pending' | 'completed' | 'cancelled';
+    priority: 'high' | 'medium' | 'low';
     completedOnDate?: string; // Track which date it was completed on
 }
 
@@ -83,7 +84,8 @@ export function createNewSubtask(
     endTime: string,
     title?: string,
     description?: string,
-    status: 'pending' | 'completed' | 'cancelled' = 'pending'
+    status: 'pending' | 'completed' | 'cancelled' = 'pending',
+    priority: 'high' | 'medium' | 'low' = 'medium'
 ): Subtask {
     const id = generateSubtaskId();
 
@@ -94,7 +96,8 @@ export function createNewSubtask(
         endTime,
         title: title || `Subtask #${id}`,
         description: description || '',
-        status
+        status,
+        priority
     };
 }
 

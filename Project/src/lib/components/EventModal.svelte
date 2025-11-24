@@ -6,6 +6,7 @@
     export let endTimeInput: string = '';
     export let titleInput: string = '';
     export let descriptionInput: string = '';
+    export let priorityInput: 'high' | 'medium' | 'low' = 'medium';
 
     export let onClose: () => void;
     export let onSave: () => void;
@@ -150,6 +151,21 @@
                         <span class="duration-text">Duration: <strong>{duration}</strong></span>
                     </div>
                 {/if}
+
+                <div class="form-group">
+                    <label for="priority">
+                        <span class="label-text">Priority</span>
+                    </label>
+                    <select
+                        id="priority"
+                        bind:value={priorityInput}
+                        class="modal-select"
+                    >
+                        <option value="high">🔴 High</option>
+                        <option value="medium">🟡 Medium</option>
+                        <option value="low">🟢 Low</option>
+                    </select>
+                </div>
 
                 <div class="form-group">
                     <label for="description">
