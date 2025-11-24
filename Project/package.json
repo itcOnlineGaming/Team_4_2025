@@ -23,5 +23,8 @@
 		"svelte-check": "^4.0.0",
 		"typescript": "^5.0.0",
 		"vite": "^7.0.4"
+	},
+	"dependencies": {
+		"@rwm-p2-2025-emily-breen/srl-sidebar": "git+https://github.com/itcOnlineGaming/RWM_P2_2025_Emily_Breen.git"
 	}
 }
