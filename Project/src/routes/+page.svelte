@@ -4,8 +4,12 @@
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
     import { base } from '$app/paths';
+    import QuickGuide from '$lib/components/QuickGuide.svelte';
+    import Tutorial from '$lib/components/Tutorial.svelte';
 
     let showConsent = false;
+    let showQuickGuide = false;
+    let showTutorial = false;
     let CalendarConsent: string | null = null;
 
     onMount(checkConsent);
@@ -22,11 +26,25 @@
     }
 
     function redirectCalendar() {
-        if (CalendarConsent === 'true') {
-            goto(`${base}/calendar`);
+        if (CalendarConsent !== 'true') {
+            showConsent = true;
             return;
         }
-        showConsent = true;
+        
+        // Check if user has completed tutorial before
+        try {
+            const tutorialCompleted = localStorage.getItem('tutorial_completed');
+            if (tutorialCompleted === 'true') {
+                // User has seen tutorial before, go straight to app
+                goto(`${base}/calendar`);
+            } else {
+                // First time user, show quick guide
+                showQuickGuide = true;
+            }
+        } catch {
+            // If localStorage fails, show quick guide to be safe
+            showQuickGuide = true;
+        }
     }
 
     function cancelConsent() {
@@ -39,7 +57,27 @@
         } catch {
             console.warn('Could not store consent in localStorage');
         }
+        CalendarConsent = 'true';
         showConsent = false;
+    }
+    
+    function handleStartTutorial() {
+        showQuickGuide = false;
+        showTutorial = true;
+    }
+    
+    function handleSkipToApp() {
+        showQuickGuide = false;
+        try {
+            localStorage.setItem('tutorial_completed', 'true');
+        } catch (e) {
+            console.warn('Could not save tutorial skip status');
+        }
+        goto(`${base}/calendar`);
+    }
+    
+    function handleTutorialComplete() {
+        showTutorial = false;
         goto(`${base}/calendar`);
     }
 </script>
@@ -67,11 +105,8 @@
     </div>
 </main>
 
-<!-- SINGLE style block: import your CSS AND add the global background here -->
 <style>
-    @import '../lib/components/style.css';
-
-    /* This affects the whole page but is only declared in THIS component */
+    /* Global page styles */
     :global(html, body) {
         height: 100%;
         margin: 0;
@@ -114,4 +149,17 @@
             </div>
         </div>
     </div>
+{/if}
+
+{#if showQuickGuide}
+    <QuickGuide 
+        onStartTutorial={handleStartTutorial}
+        onSkipToApp={handleSkipToApp}
+    />
+{/if}
+
+{#if showTutorial}
+    <Tutorial 
+        onComplete={handleTutorialComplete}
+    />
 {/if}
