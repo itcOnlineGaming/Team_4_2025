@@ -1,0 +1,247 @@
+/* ============================================================
+   HYBRID MODERN + PURPLE THEME (DRIBBBLE-INSPIRED)
+   ============================================================ */
+
+.month-sidebar {
+    width: 260px;
+    background: white;
+    border-radius: 0;
+    padding: 1rem;
+    box-shadow: none;
+    transition: width 220ms ease, padding 220ms ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #3b2b4a;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Collapsed */
+.month-sidebar.collapsed {
+    width: 64px;
+    padding: 1rem 0.5rem;
+    overflow: hidden;
+    background: white;
+}
+
+
+/* ============================================================
+   HEADER + COLLAPSE BUTTON
+   ============================================================ */
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.collapse-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: #f4eaff;
+    color: #4e3d67;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
+    transition: background 160ms ease, transform 160ms ease;
+}
+
+.collapse-button:hover {
+    background: #eadbf9;
+    transform: translateY(-2px);
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    color: #4e3d67;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.clear-button {
+    background: transparent;
+    border: none;
+    color: #8c62cf;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+h3 {
+    color: #4e3d67;
+    font-size: 0.85rem;
+    margin: 0;
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   FILTER CHIPS
+   ============================================================ */
+
+.filter-options,
+.sort-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.filter-chip,
+.sort-item {
+    background: #f4eaff;
+    border: 1px solid #d5c3e9;
+    padding: 0.35rem 0.7rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    color: #4e3d67;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.filter-chip:hover,
+.sort-item:hover {
+    background: #eadbf9;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+    accent-color: #8c62cf;
+}
+
+
+/* ============================================================
+   COLLAPSED MODE: ICONS + HIDING CHIPS
+   ============================================================ */
+
+/* Hide ALL chips when collapsed */
+.month-sidebar.collapsed .filter-options,
+.month-sidebar.collapsed .sort-options {
+    display: none !important;
+}
+
+/* Hide checkboxes/radios */
+.month-sidebar.collapsed input[type="checkbox"],
+.month-sidebar.collapsed input[type="radio"] {
+    display: none !important;
+}
+
+/* Hide text labels but keep collapsed-dot sometimes */
+.month-sidebar.collapsed label span:not(.collapsed-dot) {
+    display: none !important;
+}
+
+/* Hide collapsed dots entirely (we use icons instead) */
+.month-sidebar.collapsed .collapsed-dot {
+    display: none !important;
+}
+
+/* Clean centered layout for collapsed groups */
+.month-sidebar.collapsed .filter-group,
+.month-sidebar.collapsed .sort {
+    display: flex;
+    justify-content: center;
+    margin: 0.4rem 0;
+    padding: 0;
+}
+
+/* Collapsed icon bubble */
+.collapsed-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #f4eaff;
+    border: 1px solid #d5c3e9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    color: #4e3d67;
+    cursor: pointer;
+    margin: 0 auto;
+    transition: transform 160ms ease, background 160ms ease;
+}
+
+.collapsed-icon:hover {
+    background: #eadbf9;
+    transform: translateY(-2px);
+}
+
+
+/* ============================================================
+   AUTH SECTION
+   ============================================================ */
+
+.auth-section {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.auth-status {
+    font-size: 0.8rem;
+    color: #4e3d67;
+}
+
+.auth-button {
+    background: #8c62cf;
+    color: white;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    transition: background 150ms ease;
+}
+
+.auth-button:hover {
+    background: #744fb1;
+}
+
+.auth-icon-button {
+    width: 34px;
+    height: 34px;
+    background: #f4eaff;
+    border: 1px solid #d5c3e9;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+
+/* ============================================================
+   MOBILE SUPPORT
+   ============================================================ */
+
+@media (max-width: 600px) {
+    .month-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        border-radius: 0 16px 16px 0;
+        z-index: 999;
+    }
+}

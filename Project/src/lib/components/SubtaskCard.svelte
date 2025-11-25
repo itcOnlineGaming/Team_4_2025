@@ -5,7 +5,7 @@
 
     export let subtask: any;
     export let gridColumn: number;
-    export let gridRow: number; // Keep for backwards compatibility but won't use
+    export const gridRow: number = 1; // Keep for backwards compatibility but won't use
     export let pixelsPerHour: number;
     export let isBeingDragged: boolean = false;
     export let onDragStart: (e: MouseEvent) => void;
@@ -35,7 +35,7 @@
     // Remove subtask linking logic
     // Restore missing logic for positioning, resizing, dragging, and status handling
     const SNAP_INTERVAL = 15;
-    const MIN_HEIGHT_FOR_TEXT = 30;
+    const MIN_HEIGHT_FOR_TEXT = 20;
     const DRAG_THRESHOLD = 5;
 
     let isResizing = false;
@@ -265,10 +265,19 @@
         "
             use:dragSubtask
     >
-        <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')}></div>
-        <div class="subtask-card" id={"subtask-" + subtask.id} class:minimal={!showText} on:click={handleCardClick} role="button" tabindex="0"
+        <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')} role="button" tabindex="0" aria-label="Resize top"></div>
+        <div class="subtask-card" id={"subtask-" + subtask.id} class:minimal={!showText} on:click={handleCardClick} on:keydown={(e) => e.key === 'Enter' && handleCardClick()} role="button" tabindex="0"
             style="border-color: {majorTaskColor};">
-            {#if showText}
+            <div class="task-badges">
+                <div class="priority-badge {subtask.priority || 'medium'}">
+                    {#if subtask.priority === 'high'}
+                        🔴
+                    {:else if subtask.priority === 'low'}
+                        🟢
+                    {:else}
+                        🟡
+                    {/if}
+                </div>
                 <button class="status-badge {subtask.status || 'pending'}" on:click={handleStatusClick} type="button">
                     {#if subtask.status === 'completed'}
                         ✓
@@ -278,6 +287,8 @@
                         ○
                     {/if}
                 </button>
+            </div>
+            {#if showText}
                 <div class="subtask-content">
                     <span class="subtask-title">{subtask.title}</span>
                 </div>
@@ -295,7 +306,7 @@
                 {/if}
             {/if}
         </div>
-        <div class="resize-handle resize-bottom" on:mousedown={(e) => handleResizeStart(e, 'bottom')}></div>
+        <div class="resize-handle resize-bottom" on:mousedown={(e) => handleResizeStart(e, 'bottom')} role="button" tabindex="0" aria-label="Resize bottom"></div>
     </div>
 </div>
 
@@ -358,8 +369,8 @@
     .subtask-card {
         background: white;
         border: 2px solid #333;
-        border-radius: 16px;
-        padding: 10px;
+        border-radius: 12px;
+        padding: 8px;
         color: #333;
         font-size: 0.75rem;
         font-weight: 500;
@@ -371,30 +382,12 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: 6px;
         position: relative;
         user-select: none;
         -webkit-user-select: none;
         box-sizing: border-box;
         overflow: hidden;
-        border-color: #333; /* fallback, overridden inline */
-        z-index: 51;
-    }
-
-    .linked-major-task {
-        margin-top: 4px;
-        font-size: 0.7rem;
-        color: #555;
-        display: flex;
-        gap: 4px;
-        align-items: center;
-    }
-    .linked-title {
-        background: #eee;
-        border-radius: 8px;
-        padding: 2px 6px;
-        margin-left: 2px;
-        font-size: 0.7rem;
     }
 
     @media (max-width: 768px) {
@@ -405,23 +398,67 @@
 
     .subtask-card.minimal {
         padding: 4px;
+        border-radius: 8px;
+        min-height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f0f0;
+        border: 1px solid #666;
+    }
+
+    .subtask-card.minimal .task-badges {
+        position: static;
+        margin: 0;
+        margin-top: 4px;
+        gap: 1px;
+        justify-content: center;
+    }
+
+    .subtask-card.minimal .priority-badge,
+    .subtask-card.minimal .status-badge {
+        width: 10px;
+        height: 10px;
+        font-size: 7px;
+        border-width: 1px;
+    }
+
+    .task-badges {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        display: flex;
+        gap: 2px;
+        align-items: center;
+        z-index: 5;
+        flex-shrink: 0;
+    }
+
+    .priority-badge {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #ccc;
+        flex-shrink: 0;
     }
 
     .status-badge {
-        position: absolute;
-        top: 6px;
-        right: 6px;
         flex-shrink: 0;
-        width: 22px;
-        height: 22px;
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
-        border: 2px solid #333;
+        border: 1px solid #333;
         background: white;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 12px;
+        font-size: 9px;
         font-weight: bold;
         transition: all 0.2s;
         padding: 0;
@@ -453,8 +490,9 @@
     .subtask-content {
         flex: 1;
         width: 100%;
-        padding-right: 28px;
-        overflow: hidden;
+        padding-right: 40px; /* Space for badges */
+        padding-top: 10px; /* Move text down to clear badges */
+        overflow: ellipsis;
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;
@@ -465,16 +503,16 @@
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 6;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
         -webkit-box-orient: vertical;
-        line-height: 1.3;
+        line-height: 1.2;
         user-select: none;
         -webkit-user-select: none;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         text-align: left;
         word-break: break-word;
         hyphens: auto;
-        z-index: 52;
     }
 
     .subtask-positioner:hover .subtask-card {

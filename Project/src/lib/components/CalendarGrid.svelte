@@ -1,13 +1,13 @@
 
 <script lang="ts">
-    import { afterUpdate } from 'svelte';
+    import { afterUpdate, onMount, onDestroy } from 'svelte';
     import './style.css';
     export let weekDates: Date[];
     export let timeSlots: string[];
     export let daysOfWeek: string[];
     export let eventsIndex: Record<string, any>;
     export let pixelsPerHour: number;
-    export let handleCellClick: (date: string, time: string) => void;
+    export const handleCellClick: (date: string, time: string) => void = () => {};
     export let formatDate: (date: Date) => string;
     export let isToday: (date: Date) => boolean;
     export let onEventMove: (from: {date: string, time: string}, to: {date: string, time: string}) => void;
@@ -68,16 +68,35 @@
     }
 
     // Draw lines from each subtask to its major task
-    afterUpdate(() => {
+    function drawLines() {
         const svg = document.getElementById('subtask-major-lines');
-        if (!svg) return;
+        const gridHeader = document.querySelector('.grid-header') as HTMLElement;
+        if (!svg || !gridHeader) {
+            console.log('SVG element or grid header not found');
+            return;
+        }
+        
+        const headerHeight = gridHeader.offsetHeight;
+        
         // Clear previous lines
         while (svg.firstChild) svg.removeChild(svg.firstChild);
 
+        console.log('Drawing lines, eventsIndex:', eventsIndex);
+        
         Object.values(eventsIndex).forEach((subtask: any) => {
+            console.log('Checking subtask:', subtask.id, 'majorTaskId:', subtask.majorTaskId);
             if (!subtask.majorTaskId) return;
+            
             const subtaskEl = document.getElementById('subtask-' + subtask.id);
             const majorTaskEl = document.getElementById('major-task-' + subtask.majorTaskId);
+            
+            console.log('Elements found:', {
+                subtaskEl: !!subtaskEl,
+                majorTaskEl: !!majorTaskEl,
+                subtaskId: 'subtask-' + subtask.id,
+                majorTaskId: 'major-task-' + subtask.majorTaskId
+            });
+            
             if (!subtaskEl || !majorTaskEl) return;
 
             // Get bounding boxes
@@ -85,15 +104,20 @@
             const majorRect = majorTaskEl.getBoundingClientRect();
             const svgRect = svg.getBoundingClientRect();
 
-            // Calculate start (subtask) and end (major task) points relative to SVG
+            // Calculate positions, ensuring lines stay below header
             const startX = subRect.left + subRect.width / 2 - svgRect.left;
-            const startY = subRect.top + subRect.height / 2 - svgRect.top;
+            const startY = Math.max(subRect.top - svgRect.top, headerHeight);
             const endX = majorRect.left + majorRect.width / 2 - svgRect.left;
-            const endY = majorRect.top + majorRect.height / 2 - svgRect.top;
+            const endY = majorRect.bottom - svgRect.top;
 
-            // Use major task color if available, fallback to #333
-            let color = '#333';
-            if (majorTaskEl.style.backgroundColor) color = majorTaskEl.style.backgroundColor;
+            // Don't draw if subtask is scrolled above header
+            if (subRect.top < svgRect.top + headerHeight) return;
+
+            console.log('Drawing line from', {startX, startY}, 'to', {endX, endY});
+
+            // Get major task color from computed style
+            const computedStyle = window.getComputedStyle(majorTaskEl);
+            const color = computedStyle.backgroundColor || '#333';
 
             // Create SVG line
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -106,11 +130,33 @@
             line.setAttribute('opacity', '0.8');
             line.setAttribute('pointer-events', 'none');
             svg.appendChild(line);
+            
+            console.log('Line created with color:', color);
         });
+    }
+    
+    afterUpdate(() => {
+        drawLines();
+    });
+    
+    onMount(() => {
+        // Redraw lines on scroll
+        if (gridBodyElement) {
+            gridBodyElement.addEventListener('scroll', drawLines);
+        }
+    });
+    
+    onDestroy(() => {
+        if (gridBodyElement) {
+            gridBodyElement.removeEventListener('scroll', drawLines);
+        }
     });
 </script>
 
 <div class="calendar-grid">
+    <!-- SVG overlay for subtask-major task lines - positioned to stay with calendar, clipped by grid -->
+    <svg id="subtask-major-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; clip-path: inset(0 0 0 0);"></svg>
+    
     <div class="grid-header">
         <div class="time-column-header"></div>
         {#each weekDates as date, index}
@@ -126,8 +172,6 @@
     <TimeLine {weekDates} />
 
     <div class="grid-body" bind:this={gridBodyElement} style="--pixels-per-hour: {pixelsPerHour}px; position: relative;">
-        <!-- SVG overlay for subtask-major task lines -->
-        <svg id="subtask-major-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
         {#each timeSlots as timeSlot, timeIndex}
             <div class="time-row" style="height: {pixelsPerHour}px;">
                 <div class="time-slot">{timeSlot}</div>
@@ -140,6 +184,8 @@
                             class:past-cell={isPastDate(date)}
                             class:drop-target={draggedSubtaskKey && key !== draggedFromKey && !eventsIndex[key]}
                             on:mouseup={() => handleCellDrop(dateStr, timeSlot)}
+                            role="gridcell"
+                            tabindex="-1"
                     >
                         <!-- Empty timeline cell -->
                     </div>

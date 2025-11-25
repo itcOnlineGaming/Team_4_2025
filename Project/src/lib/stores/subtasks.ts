@@ -8,6 +8,7 @@ export interface Subtask {
     title: string;
     description: string;
     status: 'pending' | 'completed' | 'cancelled';
+    priority: 'high' | 'medium' | 'low';
     completedOnDate?: string; // Track which date it was completed on
     majorTaskId?: string; // Associated major task
     linkedSubtaskIds?: number[]; // Linked minor tasks
@@ -87,7 +88,8 @@ export function createNewSubtask(
     description?: string,
     status: 'pending' | 'completed' | 'cancelled' = 'pending',
     majorTaskId?: string,
-    linkedSubtaskIds?: number[]
+    linkedSubtaskIds?: number[],
+    priority: 'high' | 'medium' | 'low' = 'medium'
 ): Subtask {
     const id = generateSubtaskId();
 
@@ -98,9 +100,7 @@ export function createNewSubtask(
         endTime,
         title: title || `Subtask #${id}`,
         description: description || '',
-        status,
-        majorTaskId,
-        linkedSubtaskIds: linkedSubtaskIds || []
+        status
     };
 }
 

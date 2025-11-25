@@ -4,8 +4,6 @@
     import Calendar from '$lib/components/Calendar.svelte';
     import FeedBackButton from '$lib/components/FeedBackButton.svelte';
 
-    let selectedDate = new Date();
-
     onMount(() => {
         // Set theme variables used by calendar styles
         document.documentElement.style.setProperty('--background', theme.background);
@@ -19,7 +17,7 @@
 
 <main>
     <div class="calendar-wrapper">
-        <Calendar bind:selectedDate />
+        <Calendar />
     </div>
     <FeedBackButton formUrl="https://docs.google.com/forms/d/e/1FAIpQLSdZ-SvMCCUtNef0xh4V4pEj-rCvK7VwQjV50e05OuxgLJeNHQ/viewform?usp=dialog" />
 </main>

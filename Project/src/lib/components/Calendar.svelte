@@ -2,7 +2,9 @@
     import CalendarGrid from './CalendarGrid.svelte';
     import EventModal from './EventModal.svelte';
     import MajorItemModal from './TIMELINE/MajorItemModal.svelte';
-    import MonthSidebar from './MonthSidebar.svelte';
+
+    import MonthCalendar from './MonthCalendar.svelte';
+    import ExternalSidebar from './ExternalSidebar.svelte';
     import {
         subtasks,
         createNewSubtask,
@@ -28,9 +30,70 @@
     let endTimeInput = '';
     let titleInput = '';
     let descriptionInput = '';
+    let priorityInput: 'high' | 'medium' | 'low' = 'medium';
     let showAddOptions = false;
     let currentWeekStart = '';
     let majorTaskIdInput = '';
+
+    // Month calendar state
+    let selectedDate = new Date();
+    let calendarViewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+
+    // External sidebar state (always visible, but collapsible)
+    let externalSidebarVisible = true;
+    let sidebarCollapsed = false;
+    
+    function handleSidebarToggle(event: CustomEvent<{ collapsed: boolean }>) {
+        sidebarCollapsed = event.detail.collapsed;
+    }
+    
+    // Transform subtasks for sidebar filtering
+    $: sidebarItems = $subtasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        priority: task.priority,
+        date: task.date,
+        startTime: task.startTime,
+        endTime: task.endTime,
+        description: task.description
+    }));
+
+    // Sidebar filtering state
+    let filteredSubtasks: Subtask[] = [];
+    let sidebarSelectedFilters: Record<string, string[]> = {};
+    let sidebarSelectedSortId: string | null = null;
+    let filteredItems: any[] = [];
+
+    // Apply sidebar filters to subtasks and update what's displayed in calendar
+    $: {
+        let filtered = [...$subtasks];
+        
+        // Apply status filter
+        if (sidebarSelectedFilters.status && sidebarSelectedFilters.status.length > 0) {
+            filtered = filtered.filter(task => sidebarSelectedFilters.status.includes(task.status));
+        }
+        
+        // Apply priority filter
+        if (sidebarSelectedFilters.priority && sidebarSelectedFilters.priority.length > 0) {
+            filtered = filtered.filter(task => sidebarSelectedFilters.priority.includes(task.priority));
+        }
+        
+        // Apply sorting
+        if (sidebarSelectedSortId) {
+            if (sidebarSelectedSortId === 'date') {
+                filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            } else if (sidebarSelectedSortId === 'status') {
+                const statusOrder = { 'pending': 0, 'completed': 1, 'cancelled': 2 };
+                filtered.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+            } else if (sidebarSelectedSortId === 'priority') {
+                const priorityOrder = { 'high': 0, 'medium': 1, 'low': 2 };
+                filtered.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+            }
+        }
+        
+        filteredSubtasks = filtered;
+    }
 
     // Zoom state: pixels per hour (default 60px = 1 hour)
     let pixelsPerHour = 60;
@@ -50,15 +113,38 @@
     // Calculate current week dates
     $: weekDates = getWeekDates(currentWeekOffset);
 
+    // Update currentWeekOffset when selectedDate changes (from month calendar)
+    $: if (selectedDate) {
+        const today = new Date();
+        const currentDay = today.getDay();
+        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+        const thisWeekMonday = new Date(today);
+        thisWeekMonday.setDate(today.getDate() + mondayOffset);
+        
+        // Find Monday of the selected date's week
+        const selectedDay = selectedDate.getDay();
+        const selectedMondayOffset = selectedDay === 0 ? -6 : 1 - selectedDay;
+        const selectedWeekMonday = new Date(selectedDate);
+        selectedWeekMonday.setDate(selectedDate.getDate() + selectedMondayOffset);
+        
+        // Calculate week difference
+        const diffMs = selectedWeekMonday.getTime() - thisWeekMonday.getTime();
+        const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+        
+        if (diffWeeks !== currentWeekOffset) {
+            currentWeekOffset = diffWeeks;
+        }
+    }
+
     // Calculate current week start for major tasks
     $: if (weekDates.length > 0) {
         currentWeekStart = getWeekStart(weekDates[0]);
     }
 
-    // Build events index from store
+    // Build events index from filtered subtasks
     $: {
         eventsIndex = {};
-        $subtasks.forEach(event => {
+        filteredSubtasks.forEach(event => {
             const key = `${event.date}|${event.startTime}`;
             eventsIndex[key] = event;
         });
@@ -128,6 +214,7 @@
         endTimeInput = endTime;
         titleInput = '';
         descriptionInput = '';
+        priorityInput = 'medium';
         selectedEvent = null;
         showModal = true;
     }
@@ -140,7 +227,6 @@
         endTimeInput = event.endTime;
         titleInput = event.title;
         descriptionInput = event.description;
-        majorTaskIdInput = event.majorTaskId || '';
         selectedEvent = event;
         showModal = true;
     }
@@ -162,39 +248,20 @@
                 titleInput,
                 descriptionInput,
                 'pending',
-                majorTaskIdInput
+                majorTaskIdInput || undefined,
+                undefined,
+                priorityInput
             );
             subtasks.update(tasks => [...tasks, newSubtask]);
         } else if (selectedEvent) {
-            // If date changed and task was completed, update daily activity
-            if (selectedEvent.status === 'completed' && selectedEvent.date !== targetDate) {
-                const duration = getSubtaskDuration(selectedEvent);
-                const completedOnDate = selectedEvent.completedOnDate || selectedEvent.date;
-                
-                // Remove from old date
-                addTimeToDate(completedOnDate, -duration);
-                // Add to new date
-                addTimeToDate(targetDate, duration);
-                
-                updateSubtask(selectedEvent.id, {
-                    date: targetDate,
-                    startTime: startTimeInput,
-                    endTime: endTimeInput,
-                    title: titleInput,
-                    description: descriptionInput,
-                    majorTaskId: majorTaskIdInput,
-                    completedOnDate: targetDate
-                });
-            } else {
-                updateSubtask(selectedEvent.id, {
-                    date: targetDate,
-                    startTime: startTimeInput,
-                    endTime: endTimeInput,
-                    title: titleInput,
-                    description: descriptionInput,
-                    majorTaskId: majorTaskIdInput
-                });
-            }
+            updateSubtask(selectedEvent.id, {
+                startTime: startTimeInput,
+                endTime: endTimeInput,
+                title: titleInput,
+                description: descriptionInput,
+                majorTaskId: majorTaskIdInput || undefined,
+                priority: priorityInput
+            });
         }
         showModal = false;
     }
@@ -319,7 +386,8 @@
                 taskData.description,
                 taskData.color,
                 taskData.startDay,
-                taskData.endDay
+                taskData.endDay,
+                taskData.priority
             );
             majorTasks.update(tasks => [...tasks, newTask]);
         }
@@ -373,8 +441,39 @@
     }
 </script>
 
-<div class="calendar-shell">
-    <MonthSidebar selectedDate={new Date()}/>
+<div class="calendar-shell" class:collapsed={sidebarCollapsed}>
+    <!-- External Sidebar with Month Calendar inside -->
+    <ExternalSidebar 
+        bind:visible={externalSidebarVisible} 
+        title="Calendar & Tasks" 
+        items={sidebarItems}
+        bind:selectedFilters={sidebarSelectedFilters}
+        bind:selectedSortId={sidebarSelectedSortId}
+        bind:filteredItems
+        on:toggle={handleSidebarToggle}
+    >
+        <div slot="calendar">
+            <MonthCalendar bind:selectedDate bind:viewDate={calendarViewDate} />
+        </div>
+        
+        <div slot="content">
+            <!-- Filtered Results Summary -->
+            <div class="filter-results">
+                <p><strong>{filteredSubtasks.length}</strong> of <strong>{$subtasks.length}</strong> tasks shown</p>
+                {#if filteredSubtasks.length > 0}
+                    <div class="task-summary">
+                        <div class="status-counts">
+                            <div>Pending: {filteredSubtasks.filter(t => t.status === 'pending').length}</div>
+                            <div>Completed: {filteredSubtasks.filter(t => t.status === 'completed').length}</div>
+                            <div>Cancelled: {filteredSubtasks.filter(t => t.status === 'cancelled').length}</div>
+                        </div>
+                    </div>
+                {:else}
+                    <p class="no-results">No tasks match the current filters.</p>
+                {/if}
+            </div>
+        </div>
+    </ExternalSidebar>
 
     <div class="calendar-container">
         <div class="calendar-header">
@@ -382,6 +481,8 @@
             <button on:click={goToToday}>Today</button>
             <div class="week-display">{formatWeekRange(weekDates)}</div>
             <button on:click={nextWeek}>→</button>
+            
+
 
             <div class="zoom-controls">
                 <button on:click={zoomOut} title="Zoom out">−</button>
@@ -408,12 +509,14 @@
         <EventModal
                 {showModal}
                 {modalMode}
+                {selectedEvent}
                 bind:targetDate
                 bind:startTimeInput
                 bind:endTimeInput
                 bind:titleInput
                 bind:descriptionInput
                 bind:majorTaskIdInput
+                bind:priorityInput
                 onClose={handleModalClose}
                 onSave={handleModalSave}
                 onDelete={handleModalDelete}
@@ -445,6 +548,18 @@
 </div>
 
 <style>
+    .calendar-shell {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        margin-left: 320px; /* Account for fixed sidebar */
+        transition: margin-left 0.3s ease;
+    }
+    
+    .calendar-shell.collapsed {
+        margin-left: 64px; /* Collapsed sidebar width */
+    }
+
     .calendar-container {
         background: #BEB8E9;
         border-radius: 12px;
@@ -470,9 +585,9 @@
         font-weight: 600;
     }
 
-    .calendar-header button:hover {
-        background: #f5f5f5;
-    }
+
+
+
 
     .week-display {
         flex: 1;
@@ -579,5 +694,32 @@
             opacity: 1;
             transform: translateY(0);
         }
+    }
+
+    /* Filter Results Styling */
+    .filter-results {
+        font-size: 0.85rem;
+        color: #4e3d67;
+    }
+
+    .filter-results p {
+        margin: 0.5rem 0;
+    }
+
+    .task-summary {
+        margin-top: 0.75rem;
+    }
+
+    .status-counts {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    .no-results {
+        color: #999;
+        font-style: italic;
     }
 </style>
