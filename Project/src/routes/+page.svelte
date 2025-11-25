@@ -6,6 +6,7 @@
     import { base } from '$app/paths';
     import QuickGuide from '$lib/components/QuickGuide.svelte';
     import Tutorial from '$lib/components/Tutorial.svelte';
+    import './styles/landingPage.css';
 
     let showConsent = false;
     let showQuickGuide = false;
@@ -26,12 +27,13 @@
     }
 
     function redirectCalendar() {
+        // First check if consent is needed
         if (CalendarConsent !== 'true') {
             showConsent = true;
             return;
         }
         
-        // Check if user has completed tutorial before
+        // Consent is given, now check tutorial status
         try {
             const tutorialCompleted = localStorage.getItem('tutorial_completed');
             if (tutorialCompleted === 'true') {
@@ -59,6 +61,10 @@
         }
         CalendarConsent = 'true';
         showConsent = false;
+        
+        // After accepting consent for the first time, always show quick guide
+        // (since they just accepted consent, they're likely a new user)
+        showQuickGuide = true;
     }
     
     function handleStartTutorial() {
