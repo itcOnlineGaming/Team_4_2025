@@ -648,7 +648,7 @@ function openCreateModal(date: string, startTime: string) {
 
     .fab-container {
         position: fixed;
-        bottom: 96px;
+        bottom: 128px;
         right: 32px;
         display: flex;
         flex-direction: column;

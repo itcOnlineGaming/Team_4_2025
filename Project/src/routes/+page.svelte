@@ -86,6 +86,7 @@
         showTutorial = false;
         goto(`${base}/calendar`);
     }
+
 </script>
 
 <svelte:head>
