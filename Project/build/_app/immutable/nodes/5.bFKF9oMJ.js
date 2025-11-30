@@ -1,0 +1,1 @@
+import"../chunks/DsnmJJEf.js";import{i as r}from"../chunks/DXyBnxB2.js";import{p as n,o as m,f as p,c as i,d as c,e as l,$ as f}from"../chunks/cFvlkg9Z.js";var d=p("<main></main>");function g(o,s){n(s,!1);let t=[];m(()=>{try{const a=localStorage.getItem("tasks");t=a?JSON.parse(a):[]}catch{t=[]}}),r();var e=d();i(a=>{f.title="Task Battle"}),c(o,e),l()}export{g as component};

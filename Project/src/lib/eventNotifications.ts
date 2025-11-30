@@ -47,15 +47,16 @@ export function notifyEventModified(event: Subtask) {
   );
 }
 
-// Notify when an event is within 1 hour
+// Show reminder modal (to be implemented in UI layer)
 export function notifyEventReminder(event: Subtask) {
   const minutesUntil = getMinutesUntilEvent(event);
   
-  snackbar.warning(`Reminder: ${event.title} starts in ${minutesUntil} minutes`, {
-    duration: 6000,
-    position: 'top-center',
-    showClose: true
-  });
+  // Dispatch custom event for UI to handle
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('showReminderModal', { 
+      detail: { event, minutesUntil } 
+    }));
+  }
 
   sendNotification(
     'Event Reminder', 
@@ -84,6 +85,53 @@ export function isEventWithinReminderWindow(event: Subtask): boolean {
   return minutesUntil > 0 && minutesUntil <= 60;
 }
 
+// Notify when an event is deleted
+export function notifyEventDeleted(event: Subtask) {
+  snackbar.error(`Event deleted: ${event.title}`, {
+    duration: 4000,
+    position: 'bottom-right'
+  });
+
+  sendNotification(
+    'Event Deleted', 
+    `${event.title} has been removed from your calendar`,
+    {
+      icon: '/favicon.svg',
+      tag: `event-deleted-${event.id}`
+    }
+  );
+}
+
+// Snooze a reminder for a specific event
+export function snoozeReminder(event: Subtask, snoozeMinutes: number = 15) {
+  const snoozeData = JSON.parse(localStorage.getItem('snoozedReminders') || '{}');
+  const snoozeUntil = Date.now() + (snoozeMinutes * 60 * 1000);
+  snoozeData[event.id] = snoozeUntil;
+  localStorage.setItem('snoozedReminders', JSON.stringify(snoozeData));
+  
+  snackbar.info(`Reminder snoozed for ${snoozeMinutes} minutes`, {
+    duration: 3000,
+    position: 'bottom-right'
+  });
+}
+
+// Check if a reminder is snoozed
+function isReminderSnoozed(eventId: number): boolean {
+  const snoozeData = JSON.parse(localStorage.getItem('snoozedReminders') || '{}');
+  const snoozeUntil = snoozeData[eventId];
+  
+  if (!snoozeUntil) return false;
+  
+  if (Date.now() < snoozeUntil) {
+    return true;
+  } else {
+    // Snooze expired, clean up
+    delete snoozeData[eventId];
+    localStorage.setItem('snoozedReminders', JSON.stringify(snoozeData));
+    return false;
+  }
+}
+
 // Check all events and send reminders for upcoming ones
 export function checkUpcomingEvents(events: Subtask[]) {
   const now = new Date();
@@ -95,8 +143,8 @@ export function checkUpcomingEvents(events: Subtask[]) {
     const minutesUntil = getMinutesUntilEvent(event);
     const eventIdStr = String(event.id);
     
-    // Send reminder if within 60 minutes and not already sent
-    if (minutesUntil > 0 && minutesUntil <= 60 && !remindersSent.has(eventIdStr)) {
+    // Send reminder if within 60 minutes, not already sent, and not snoozed
+    if (minutesUntil > 0 && minutesUntil <= 60 && !remindersSent.has(eventIdStr) && !isReminderSnoozed(event.id)) {
       notifyEventReminder(event);
       remindersSent.add(eventIdStr);
     }

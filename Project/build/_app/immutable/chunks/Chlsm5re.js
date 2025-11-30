@@ -1,1 +1,0 @@
-import{n as e}from"./B-dIStYR.js";function i(n){return function(...a){var t=a[0];return t.stopPropagation(),n?.apply(this,a)}}function l(n,a){var t=n.$$events?.[a.type],r=e(t)?t.slice():t==null?[]:[t];for(var o of r)o.call(this,a)}export{l as b,i as s};

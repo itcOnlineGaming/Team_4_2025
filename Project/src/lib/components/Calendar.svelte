@@ -2,6 +2,7 @@
     import CalendarGrid from './CalendarGrid.svelte';
     import EventModal from './EventModal.svelte';
     import MajorItemModal from './TIMELINE/MajorItemModal.svelte';
+    import ReminderModal from './ReminderModal.svelte';
 
     import MonthCalendar from './MonthCalendar.svelte';
     import ExternalSidebar from './ExternalSidebar.svelte';
@@ -21,6 +22,8 @@
     import { 
         notifyEventCreated, 
         notifyEventModified, 
+        notifyEventDeleted,
+        snoozeReminder,
         checkUpcomingEvents,
         ensureNotificationPermission 
     } from '../eventNotifications';
@@ -282,6 +285,7 @@ function openCreateModal(date: string, startTime: string) {
 
     function handleModalDelete() {
         if (selectedEvent) {
+            notifyEventDeleted(selectedEvent);
             deleteSubtask(selectedEvent.id);
         }
         showModal = false;
@@ -752,3 +756,5 @@ function openCreateModal(date: string, startTime: string) {
         font-style: italic;
     }
 </style>
+
+<ReminderModal />
