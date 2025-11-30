@@ -13,12 +13,17 @@
         position: relative;
     }
     
-    .major-task-bar.hovered {
+.major-task-bar.hovered {
         height: auto;
         min-height: 60px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         align-items: flex-start;
     }
+
+.major-task-bar.dimmed {
+    filter: grayscale(0.7) brightness(0.7);
+    opacity: 0.5;
+}
     
     .task-content {
         flex: 1;

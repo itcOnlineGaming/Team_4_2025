@@ -1,7 +1,8 @@
 <script lang="ts">
     import './MajorItem.css';
     import { deleteTask } from '../../stores/majorTasks';
-    import { hoveredMajorTaskId } from '../../stores/hoverHighlight';
+    import { hoveredMajorTaskId, hoveredSubtaskId } from '../../stores/hoverHighlight';
+    import { get } from 'svelte/store';
     import { onDestroy } from 'svelte';
 
     export let id: string;
@@ -16,10 +17,27 @@
 
     // Highlight if this major task is related to hovered subtask
     let isHighlighted = false;
-    const unsubscribe = hoveredMajorTaskId.subscribe((hoveredId) => {
+    let isDimmed = false;
+    const unsubMajor = hoveredMajorTaskId.subscribe((hoveredId) => {
         isHighlighted = hoveredId === id;
+        updateDimmed();
     });
-    onDestroy(unsubscribe);
+    const unsubSub = hoveredSubtaskId.subscribe(() => {
+        updateDimmed();
+    });
+    function updateDimmed() {
+        const hoveredMajorId = get(hoveredMajorTaskId);
+        const hoveredSubId = get(hoveredSubtaskId);
+        if (hoveredMajorId !== null || hoveredSubId !== null) {
+            isDimmed = !isHighlighted;
+        } else {
+            isDimmed = false;
+        }
+    }
+    onDestroy(() => {
+        unsubMajor();
+        unsubSub();
+    });
 
     // Calculate grid column span (add 1 because grid starts at column 2, column 1 is timeline label)
     $: gridColumnStart = startDay + 1;
@@ -56,6 +74,7 @@
     id={"major-task-" + id}
     class:hovered={isHovered}
     class:highlighted={isHighlighted}
+    class:dimmed={isDimmed}
     style="background-color: {color}; grid-column: {gridColumnStart} / {gridColumnEnd};"
     on:mouseenter={handleMouseEnter}
     on:mouseleave={handleMouseLeave}
