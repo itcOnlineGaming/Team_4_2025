@@ -103,12 +103,13 @@
             const subRect = subtaskEl.getBoundingClientRect();
             const majorRect = majorTaskEl.getBoundingClientRect();
             const svgRect = svg.getBoundingClientRect();
+            var amountOfLinesOffset = 0;
 
             // Calculate positions, ensuring lines stay below header
-            const startX = subRect.left + subRect.width / 2 - svgRect.left;
-            const startY = Math.max(subRect.top - svgRect.top, headerHeight);
-            const endX = majorRect.left + majorRect.width / 2 - svgRect.left;
-            const endY = majorRect.bottom - svgRect.top;
+            const startX = subRect.left - (subRect.width / 1.2) + (amountOfLinesOffset * 5);
+            const startY = Math.max(subRect.top - svgRect.top + (subRect.height / 2), headerHeight);
+            const endX = subRect.left - (subRect.width / 1.2)+ (amountOfLinesOffset * 5);
+            const endY = majorRect.top - 10; // Position off-screen above
 
             // Don't draw if subtask is scrolled above header
             if (subRect.top < svgRect.top + headerHeight) return;
