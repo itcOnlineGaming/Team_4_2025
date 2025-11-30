@@ -18,6 +18,12 @@
     import { majorTasks, createNewTask, getWeekStart } from '../stores/majorTasks';
     import { addTimeToDate, repopulateFromCompletedTasks, dailyActivity } from '../stores/dailyActivity';
     import { onMount } from 'svelte';
+    import { 
+        notifyEventCreated, 
+        notifyEventModified, 
+        checkUpcomingEvents,
+        ensureNotificationPermission 
+    } from '../eventNotifications';
 
     let eventsIndex: Record<string, Subtask> = {};
     let showModal = false;
@@ -257,8 +263,10 @@ function openCreateModal(date: string, startTime: string) {
                 priorityInput
             );
             subtasks.update(tasks => [...tasks, newSubtask]);
+            notifyEventCreated(newSubtask);
         } else if (selectedEvent) {
-            updateSubtask(selectedEvent.id, {
+            const eventId = selectedEvent.id;
+            updateSubtask(eventId, {
                 startTime: startTimeInput,
                 endTime: endTimeInput,
                 title: titleInput,
@@ -266,6 +274,8 @@ function openCreateModal(date: string, startTime: string) {
                 majorTaskId: majorTaskIdInput || undefined,
                 priority: priorityInput
             });
+            const updatedEvent = $subtasks.find(t => t.id === eventId);
+            if (updatedEvent) notifyEventModified(updatedEvent);
         }
         showModal = false;
     }
@@ -443,6 +453,21 @@ function openCreateModal(date: string, startTime: string) {
 
         currentWeekOffset = diffWeeks;
     }
+
+    // Set up notification permissions and reminder checks
+    onMount(() => {
+        ensureNotificationPermission();
+        
+        // Check for upcoming events every 5 minutes
+        const reminderInterval = setInterval(() => {
+            checkUpcomingEvents($subtasks);
+        }, 5 * 60 * 1000);
+
+        // Initial check
+        checkUpcomingEvents($subtasks);
+
+        return () => clearInterval(reminderInterval);
+    });
 </script>
 
 <div class="calendar-shell" class:collapsed={sidebarCollapsed}>

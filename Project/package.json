@@ -25,6 +25,7 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
-		"@rwm-p2-2025-emily-breen/srl-sidebar": "git+https://github.com/itcOnlineGaming/RWM_P2_2025_Emily_Breen.git"
+		"@rwm-p2-2025-emily-breen/srl-sidebar": "git+https://github.com/itcOnlineGaming/RWM_P2_2025_Emily_Breen.git",
+		"snackbar-project": "^1.0.9"
 	}
 }
