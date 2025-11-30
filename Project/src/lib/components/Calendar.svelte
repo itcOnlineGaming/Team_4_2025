@@ -190,34 +190,38 @@
         return `${startStr} - ${endStr}`;
     }
 
-    function handleCellClick(date: string, time: string) {
-        const key = `${date}|${time}`;
-        const existing = eventsIndex[key];
+function handleCellClick(date: string, time: string) {
+    const key = `${date}|${time}`;
+    const existing = eventsIndex[key];
+    console.log('handleCellClick:', { key, existing });
 
-        if (existing) {
-            openViewModal(existing, date, time);
-        } else {
-            openCreateModal(date, time);
-        }
+    if (existing) {
+        console.log('handleCellClick: opening view modal');
+        openViewModal(existing, date, time);
+    } else {
+        console.log('handleCellClick: opening create modal');
+        openCreateModal(date, time);
     }
+}
 
-    function openCreateModal(date: string, startTime: string) {
-        modalMode = 'create';
-        targetDate = date;
-        targetStartTime = startTime;
+function openCreateModal(date: string, startTime: string) {
+    console.log('openCreateModal called:', date, startTime);
+    modalMode = 'create';
+    targetDate = date;
+    targetStartTime = startTime;
 
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const endHours = (hours + 1) % 24;
-        const endTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const endHours = (hours + 1) % 24;
+    const endTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
-        startTimeInput = startTime;
-        endTimeInput = endTime;
-        titleInput = '';
-        descriptionInput = '';
-        priorityInput = 'medium';
-        selectedEvent = null;
-        showModal = true;
-    }
+    startTimeInput = startTime;
+    endTimeInput = endTime;
+    titleInput = '';
+    descriptionInput = '';
+    priorityInput = 'medium';
+    selectedEvent = null;
+    showModal = true;
+}
 
     function openViewModal(event: Subtask, date: string, startTime: string) {
         modalMode = 'view';
@@ -619,11 +623,11 @@
 
     .fab-container {
         position: fixed;
-        bottom: 32px;
-        left: 32px;
+        bottom: 96px;
+        right: 32px;
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: flex-end;
         gap: 12px;
         z-index: 9999;
     }

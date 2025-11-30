@@ -9,7 +9,7 @@
     export let daysOfWeek: string[];
     export let eventsIndex: Record<string, any>;
     export let pixelsPerHour: number;
-    export const handleCellClick: (date: string, time: string) => void = () => {};
+export let handleCellClick: (date: string, time: string) => void;
     export let formatDate: (date: Date) => string;
     export let isToday: (date: Date) => boolean;
     export let onEventMove: (from: {date: string, time: string}, to: {date: string, time: string}) => void;
@@ -24,7 +24,33 @@
     let currentHour = new Date().getHours();
     let draggedSubtaskKey: string | null = null;
     let draggedFromKey: string | null = null;
-    let gridBodyElement: HTMLElement;
+let gridBodyElement: HTMLElement;
+
+// Subtask creation modal state
+let showSubtaskModal = false;
+let newSubtaskDate = '';
+let newSubtaskTime = '';
+let newSubtaskTitle = '';
+
+import { createNewSubtask, subtasks } from '../stores/subtasks';
+
+function handleCreateSubtask() {
+    const newSubtask = createNewSubtask(
+        newSubtaskDate,
+        newSubtaskTime,
+        newSubtaskTime,
+        newSubtaskTitle,
+        '',
+        'pending'
+    );
+    subtasks.update(tasks => [...tasks, newSubtask]);
+    showSubtaskModal = false;
+}
+
+function openSubtaskModal(date: string, time: string) {
+    console.log('openSubtaskModal called:', date, time);
+    handleCellClick(date, time);
+}
 
     function isPastDate(date: Date): boolean {
         const today = new Date();
@@ -289,7 +315,9 @@ const uniqueTaskId : number[] = [];
                 <div class="day-name">{daysOfWeek[index].toUpperCase()}</div>
                 <div class="day-number" class:today-number={isToday(date)}>
                     {formatDate(date)}
-                </div>
+</div>
+
+<!-- Custom modal removed. Use parent modal logic. -->
             </div>
         {/each}
     </div>
@@ -304,14 +332,16 @@ const uniqueTaskId : number[] = [];
                 {#each weekDates as date, dayIndex}
                     {@const dateStr = date.toISOString().split('T')[0]}
                     {@const key = `${dateStr}|${timeSlot}`}
-                    <div
+<div
                             class="calendar-cell"
                             class:current-hour={isToday(date) && currentHour === timeIndex}
                             class:past-cell={isPastDate(date)}
                             class:drop-target={draggedSubtaskKey && key !== draggedFromKey && !eventsIndex[key]}
                             on:mouseup={() => handleCellDrop(dateStr, timeSlot)}
+on:click={(event) => { event.stopPropagation(); openSubtaskModal(dateStr, timeSlot); }}
+                            style="background: rgba(255,255,255,0.01); cursor: pointer;"
                             role="gridcell"
-                            tabindex="-1"
+                            tabindex="0"
                     >
                         <!-- Empty timeline cell -->
                     </div>

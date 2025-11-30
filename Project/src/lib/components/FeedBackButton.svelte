@@ -14,7 +14,7 @@
         position: fixed;
         bottom: 1.5rem;
         right: 1.5rem;
-        background-color: #7F6399;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         font-weight: 600;
         border: none;
@@ -22,12 +22,12 @@
         padding: 0.8rem 1.4rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         cursor: pointer;
-        transition: background-color 0.25s ease, transform 0.2s ease;
+        transition: background 0.25s ease, transform 0.2s ease;
         z-index: 1000;
     }
 
     .feedback-button:hover {
-        background-color: #866e9c;
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         transform: translateY(-2px);
     }
 
