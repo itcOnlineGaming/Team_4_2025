@@ -14,7 +14,10 @@
         timeToMinutes,
         minutesToTime,
         type Subtask,
-        getSubtaskDuration
+        getSubtaskDuration,
+        createRecurringTask,
+        deleteRecurringTask,
+        updateRecurringTask
     } from '../stores/subtasks';
     import { majorTasks, createNewTask, getWeekStart } from '../stores/majorTasks';
     import { addTimeToDate, repopulateFromCompletedTasks, dailyActivity } from '../stores/dailyActivity';
@@ -43,6 +46,11 @@
     let showAddOptions = false;
     let currentWeekStart = '';
     let majorTaskIdInput = '';
+    
+    // Recurring event state
+    let isRecurring = false;
+    let recurrencePattern: 'daily' | 'weekly' | 'monthly' = 'daily';
+    let recurrenceEndDate = '';
 
     // Month calendar state
     let selectedDate = new Date();
@@ -213,6 +221,11 @@ function handleCellClick(date: string, time: string) {
     }
 }
 
+function getTodayDateString(): string {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+}
+
 function openCreateModal(date: string, startTime: string) {
     console.log('openCreateModal called:', date, startTime);
     modalMode = 'create';
@@ -228,6 +241,9 @@ function openCreateModal(date: string, startTime: string) {
     titleInput = '';
     descriptionInput = '';
     priorityInput = 'medium';
+    isRecurring = false;
+    recurrencePattern = 'daily';
+    recurrenceEndDate = '';
     selectedEvent = null;
     showModal = true;
 }
@@ -240,6 +256,10 @@ function openCreateModal(date: string, startTime: string) {
         endTimeInput = event.endTime;
         titleInput = event.title;
         descriptionInput = event.description;
+        priorityInput = event.priority;
+        isRecurring = event.isRecurring || false;
+        recurrencePattern = event.recurrencePattern || 'daily';
+        recurrenceEndDate = event.recurrenceEndDate || '';
         selectedEvent = event;
         showModal = true;
     }
@@ -252,31 +272,89 @@ function openCreateModal(date: string, startTime: string) {
             alert('End time must be after start time');
             return;
         }
+        
+        // Validate recurring event end date
+        if (isRecurring && !recurrenceEndDate) {
+            alert('Please select an end date for the recurring event');
+            return;
+        }
+        
+        if (isRecurring && recurrenceEndDate < targetDate) {
+            alert('Recurrence end date must be after the start date');
+            return;
+        }
 
         if (modalMode === 'create') {
-            const newSubtask = createNewSubtask(
-                targetDate,
-                startTimeInput,
-                endTimeInput,
-                titleInput,
-                descriptionInput,
-                'pending',
-                majorTaskIdInput || undefined,
-                undefined,
-                priorityInput
-            );
-            subtasks.update(tasks => [...tasks, newSubtask]);
-            notifyEventCreated(newSubtask);
+            if (isRecurring) {
+                // Create recurring task with all instances
+                createRecurringTask(
+                    targetDate,
+                    startTimeInput,
+                    endTimeInput,
+                    titleInput,
+                    descriptionInput,
+                    priorityInput,
+                    recurrencePattern,
+                    recurrenceEndDate,
+                    majorTaskIdInput || undefined
+                );
+                
+                // Get the base task for notification
+                const baseTask = $subtasks.find(t => 
+                    t.date === targetDate && 
+                    t.startTime === startTimeInput && 
+                    t.title === titleInput &&
+                    t.isRecurring
+                );
+                if (baseTask) {
+                    notifyEventCreated(baseTask);
+                }
+            } else {
+                // Create single task
+                const newSubtask = createNewSubtask(
+                    targetDate,
+                    startTimeInput,
+                    endTimeInput,
+                    titleInput,
+                    descriptionInput,
+                    'pending',
+                    majorTaskIdInput || undefined,
+                    undefined,
+                    priorityInput
+                );
+                subtasks.update(tasks => [...tasks, newSubtask]);
+                notifyEventCreated(newSubtask);
+            }
         } else if (selectedEvent) {
             const eventId = selectedEvent.id;
-            updateSubtask(eventId, {
-                startTime: startTimeInput,
-                endTime: endTimeInput,
-                title: titleInput,
-                description: descriptionInput,
-                majorTaskId: majorTaskIdInput || undefined,
-                priority: priorityInput
-            });
+            
+            // Check if this is a recurring event or instance
+            if (selectedEvent.isRecurring || selectedEvent.isRecurrenceInstance) {
+                const updateAll = confirm(
+                    'Do you want to update all instances of this recurring event?\n\n' +
+                    'Click OK to update all instances\n' +
+                    'Click Cancel to update only this instance'
+                );
+                
+                updateRecurringTask(eventId, {
+                    startTime: startTimeInput,
+                    endTime: endTimeInput,
+                    title: titleInput,
+                    description: descriptionInput,
+                    majorTaskId: majorTaskIdInput || undefined,
+                    priority: priorityInput
+                }, updateAll);
+            } else {
+                updateSubtask(eventId, {
+                    startTime: startTimeInput,
+                    endTime: endTimeInput,
+                    title: titleInput,
+                    description: descriptionInput,
+                    majorTaskId: majorTaskIdInput || undefined,
+                    priority: priorityInput
+                });
+            }
+            
             const updatedEvent = $subtasks.find(t => t.id === eventId);
             if (updatedEvent) notifyEventModified(updatedEvent);
         }
@@ -285,8 +363,20 @@ function openCreateModal(date: string, startTime: string) {
 
     function handleModalDelete() {
         if (selectedEvent) {
-            notifyEventDeleted(selectedEvent);
-            deleteSubtask(selectedEvent.id);
+            // Check if this is a recurring event or instance
+            if (selectedEvent.isRecurring || selectedEvent.isRecurrenceInstance) {
+                const deleteAll = confirm(
+                    'Do you want to delete all instances of this recurring event?\n\n' +
+                    'Click OK to delete all instances\n' +
+                    'Click Cancel to delete only this instance'
+                );
+                
+                notifyEventDeleted(selectedEvent);
+                deleteRecurringTask(selectedEvent.id, deleteAll);
+            } else {
+                notifyEventDeleted(selectedEvent);
+                deleteSubtask(selectedEvent.id);
+            }
         }
         showModal = false;
     }
@@ -550,6 +640,9 @@ function openCreateModal(date: string, startTime: string) {
                 bind:descriptionInput
                 bind:majorTaskIdInput
                 bind:priorityInput
+                bind:isRecurring
+                bind:recurrencePattern
+                bind:recurrenceEndDate
                 onClose={handleModalClose}
                 onSave={handleModalSave}
                 onDelete={handleModalDelete}

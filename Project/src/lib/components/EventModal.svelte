@@ -11,6 +11,11 @@
     export let majorTaskIdInput: string = '';
     export let selectedEvent: any = null;
     export let priorityInput: 'high' | 'medium' | 'low' = 'medium';
+    
+    // Recurring event fields
+    export let isRecurring: boolean = false;
+    export let recurrencePattern: 'daily' | 'weekly' | 'monthly' = 'daily';
+    export let recurrenceEndDate: string = '';
 
     export let onClose: () => void;
     export let onSave: () => void;
@@ -127,6 +132,7 @@
                         id="date"
                         type="date"
                         bind:value={targetDate}
+                        min={new Date().toISOString().split('T')[0]}
                         class="modal-input date-input"
                         required
                     />
@@ -222,6 +228,52 @@
                             <option value={task.id}>{task.title}</option>
                         {/each}
                     </select>
+                </div>
+
+                <!-- Recurring Event Section -->
+                <div class="form-group recurrence-section">
+                    <label class="checkbox-label">
+                        <input
+                            type="checkbox"
+                            bind:checked={isRecurring}
+                            class="checkbox-input"
+                        />
+                        <span class="label-text">🔁 Repeat this task</span>
+                    </label>
+                    
+                    {#if isRecurring}
+                        <div class="recurrence-options">
+                            <div class="form-group">
+                                <label for="recurrencePattern">
+                                    <span class="label-text">Repeat</span>
+                                </label>
+                                <select
+                                    id="recurrencePattern"
+                                    bind:value={recurrencePattern}
+                                    class="modal-select"
+                                >
+                                    <option value="daily">📅 Daily</option>
+                                    <option value="weekly">📆 Weekly</option>
+                                    <option value="monthly">🗓️ Monthly</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="recurrenceEndDate">
+                                    <span class="label-text">Until</span>
+                                    <span class="label-required">*</span>
+                                </label>
+                                <input
+                                    id="recurrenceEndDate"
+                                    type="date"
+                                    bind:value={recurrenceEndDate}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    class="modal-input date-input"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    {/if}
                 </div>
             </div>
 

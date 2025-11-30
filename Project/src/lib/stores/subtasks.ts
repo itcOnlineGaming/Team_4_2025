@@ -12,6 +12,12 @@ export interface Subtask {
     completedOnDate?: string; // Track which date it was completed on
     majorTaskId?: string; // Associated major task
     linkedSubtaskIds?: number[]; // Linked minor tasks
+    // Recurrence fields
+    isRecurring?: boolean;
+    recurrencePattern?: 'daily' | 'weekly' | 'monthly';
+    recurrenceEndDate?: string; // ISO date string (YYYY-MM-DD)
+    recurrenceParentId?: number; // ID of the original recurring task
+    isRecurrenceInstance?: boolean; // True if this is a generated instance
 }
 
 // LocalStorage keys
@@ -89,7 +95,10 @@ export function createNewSubtask(
     status: 'pending' | 'completed' | 'cancelled' = 'pending',
     majorTaskId?: string,
     linkedSubtaskIds?: number[],
-    priority: 'high' | 'medium' | 'low' = 'medium'
+    priority: 'high' | 'medium' | 'low' = 'medium',
+    isRecurring?: boolean,
+    recurrencePattern?: 'daily' | 'weekly' | 'monthly',
+    recurrenceEndDate?: string
 ): Subtask {
     const id = generateSubtaskId();
 
@@ -100,7 +109,13 @@ export function createNewSubtask(
         endTime,
         title: title || `Subtask #${id}`,
         description: description || '',
-        status
+        status,
+        priority,
+        majorTaskId,
+        linkedSubtaskIds,
+        isRecurring,
+        recurrencePattern,
+        recurrenceEndDate
     };
 }
 
@@ -158,4 +173,148 @@ export function getSubtaskDuration(subtask: Subtask): number {
     const startMinutes = timeToMinutes(subtask.startTime);
     const endMinutes = timeToMinutes(subtask.endTime);
     return endMinutes - startMinutes;
+}
+
+// Helper function to add days to a date
+function addDays(dateStr: string, days: number): string {
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+}
+
+// Helper function to add months to a date
+function addMonths(dateStr: string, months: number): string {
+    const date = new Date(dateStr);
+    date.setMonth(date.getMonth() + months);
+    return date.toISOString().split('T')[0];
+}
+
+// Generate recurring task instances
+export function generateRecurringInstances(baseTask: Subtask): Subtask[] {
+    if (!baseTask.isRecurring || !baseTask.recurrencePattern) {
+        return [];
+    }
+
+    const instances: Subtask[] = [];
+    let currentDate = baseTask.date;
+    const endDate = baseTask.recurrenceEndDate || addMonths(baseTask.date, 12); // Default 1 year
+    const maxInstances = 365; // Safety limit
+    let count = 0;
+
+    while (currentDate <= endDate && count < maxInstances) {
+        // Skip the first instance (original task)
+        if (currentDate !== baseTask.date) {
+            const instance: Subtask = {
+                ...baseTask,
+                id: generateSubtaskId(),
+                date: currentDate,
+                status: 'pending',
+                recurrenceParentId: baseTask.id,
+                isRecurrenceInstance: true
+            };
+            instances.push(instance);
+        }
+
+        // Calculate next occurrence
+        switch (baseTask.recurrencePattern) {
+            case 'daily':
+                currentDate = addDays(currentDate, 1);
+                break;
+            case 'weekly':
+                currentDate = addDays(currentDate, 7);
+                break;
+            case 'monthly':
+                currentDate = addMonths(currentDate, 1);
+                break;
+        }
+        count++;
+    }
+
+    return instances;
+}
+
+// Helper function to create a recurring task and its instances
+export function createRecurringTask(
+    date: string,
+    startTime: string,
+    endTime: string,
+    title: string,
+    description: string,
+    priority: 'high' | 'medium' | 'low',
+    recurrencePattern: 'daily' | 'weekly' | 'monthly',
+    recurrenceEndDate: string,
+    majorTaskId?: string
+): void {
+    // Create the base recurring task
+    const baseTask = createNewSubtask(
+        date,
+        startTime,
+        endTime,
+        title,
+        description,
+        'pending',
+        majorTaskId,
+        undefined,
+        priority,
+        true,
+        recurrencePattern,
+        recurrenceEndDate
+    );
+
+    // Generate all instances
+    const instances = generateRecurringInstances(baseTask);
+
+    // Add all tasks to the store
+    subtasks.update(tasks => [...tasks, baseTask, ...instances]);
+}
+
+// Helper function to delete a recurring task and all its instances
+export function deleteRecurringTask(taskId: number, deleteAllInstances: boolean = false): void {
+    subtasks.update(tasks => {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) return tasks;
+
+        // If deleting all instances, remove the parent and all children
+        if (deleteAllInstances && task.isRecurring) {
+            return tasks.filter(t => t.id !== taskId && t.recurrenceParentId !== taskId);
+        }
+        // If this is an instance, check if user wants to delete all
+        else if (deleteAllInstances && task.isRecurrenceInstance && task.recurrenceParentId) {
+            return tasks.filter(t => 
+                t.id !== task.recurrenceParentId && 
+                t.recurrenceParentId !== task.recurrenceParentId
+            );
+        }
+        // Just delete this single task
+        else {
+            return tasks.filter(t => t.id !== taskId);
+        }
+    });
+}
+
+// Helper function to update a recurring task
+export function updateRecurringTask(
+    taskId: number, 
+    updates: Partial<Omit<Subtask, 'id'>>,
+    updateAllInstances: boolean = false
+): void {
+    subtasks.update(tasks => {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) return tasks;
+
+        // Update all instances if requested
+        if (updateAllInstances) {
+            const parentId = task.isRecurring ? task.id : task.recurrenceParentId;
+            return tasks.map(t => {
+                if (t.id === parentId || t.recurrenceParentId === parentId) {
+                    return { ...t, ...updates, date: t.date }; // Keep original dates
+                }
+                return t;
+            });
+        }
+        // Just update this single task
+        else {
+            return tasks.map(t => t.id === taskId ? { ...t, ...updates } : t);
+        }
+    });
 }
