@@ -2,6 +2,7 @@
     import { majorTasks } from '../stores/majorTasks';
     import { subtasks } from '../stores/subtasks';
     import { get } from 'svelte/store';
+    import { hoveredSubtaskId, hoveredMajorTaskId } from '../stores/hoverHighlight';
 
     export let subtask: any;
     export let gridColumn: number;
@@ -266,8 +267,26 @@
             use:dragSubtask
     >
         <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')} role="button" tabindex="0" aria-label="Resize top"></div>
-        <div class="subtask-card" id={"subtask-" + subtask.id} class:minimal={!showText} on:click={handleCardClick} on:keydown={(e) => e.key === 'Enter' && handleCardClick()} role="button" tabindex="0"
-            style="border-color: {majorTaskColor};">
+        <div
+            class="subtask-card"
+            id={"subtask-" + subtask.id}
+            class:minimal={!showText}
+            class:highlighted={$hoveredSubtaskId !== null && ($hoveredSubtaskId === subtask.id || $hoveredMajorTaskId === subtask.majorTaskId)}
+            class:dimmed={$hoveredSubtaskId !== null && !($hoveredSubtaskId === subtask.id || $hoveredMajorTaskId === subtask.majorTaskId)}
+            on:mouseenter={() => {
+                hoveredSubtaskId.set(subtask.id);
+                hoveredMajorTaskId.set(subtask.majorTaskId || null);
+            }}
+            on:mouseleave={() => {
+                hoveredSubtaskId.set(null);
+                hoveredMajorTaskId.set(null);
+            }}
+            on:click={handleCardClick}
+            on:keydown={(e) => e.key === 'Enter' && handleCardClick()}
+            role="button"
+            tabindex="0"
+            style="border-color: {majorTaskColor};"
+        >
             <div class="task-badges">
                 <div class="priority-badge {subtask.priority || 'medium'}">
                     {#if subtask.priority === 'high'}
@@ -375,7 +394,7 @@
         font-size: 0.75rem;
         font-weight: 500;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s, filter 0.2s, opacity 0.2s;
         height: 100%;
         width: 100%;
         max-width: 140px;
@@ -388,6 +407,19 @@
         -webkit-user-select: none;
         box-sizing: border-box;
         overflow: hidden;
+    }
+
+    .subtask-card.highlighted {
+        z-index: 101;
+        box-shadow: 0 0 0 3px #1976d2, 0 4px 12px rgba(25, 118, 210, 0.25);
+        filter: none;
+        opacity: 1;
+    }
+
+    .subtask-card.dimmed {
+        filter: grayscale(0.7) brightness(0.7);
+        opacity: 0.5;
+        z-index: 1;
     }
 
     @media (max-width: 768px) {

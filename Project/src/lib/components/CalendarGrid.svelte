@@ -2,6 +2,8 @@
 <script lang="ts">
     import { afterUpdate, onMount, onDestroy } from 'svelte';
     import './style.css';
+    import { hoveredSubtaskId } from '../stores/hoverHighlight';
+    import { get } from 'svelte/store';
     export let weekDates: Date[];
     export let timeSlots: string[];
     export let daysOfWeek: string[];
@@ -213,6 +215,7 @@ const uniqueTaskId : number[] = [];
     <TimeLine {weekDates} />
 
     <div class="grid-body" bind:this={gridBodyElement} style="--pixels-per-hour: {pixelsPerHour}px; position: relative;">
+        <!-- Overlay removed: only .dimmed class will be used for non-highlighted elements -->
         {#each timeSlots as timeSlot, timeIndex}
             <div class="time-row" style="height: {pixelsPerHour}px;">
                 <div class="time-slot">{timeSlot}</div>
@@ -271,4 +274,5 @@ const uniqueTaskId : number[] = [];
         background-color: #f5f5f5;
         opacity: 0.6;
     }
+    /* .subtask-hover-overlay removed */
 </style>

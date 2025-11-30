@@ -1,41 +1,50 @@
 <script lang="ts">
     import './MajorItem.css';
     import { deleteTask } from '../../stores/majorTasks';
-    
+    import { hoveredMajorTaskId } from '../../stores/hoverHighlight';
+    import { onDestroy } from 'svelte';
+
     export let id: string;
     export let title: string;
     export let description: string;
     export let color: string;
     export let startDay: number;
     export let endDay: number;
-    
+
     let isHovered = false;
     let showDeleteConfirm = false;
-    
+
+    // Highlight if this major task is related to hovered subtask
+    let isHighlighted = false;
+    const unsubscribe = hoveredMajorTaskId.subscribe((hoveredId) => {
+        isHighlighted = hoveredId === id;
+    });
+    onDestroy(unsubscribe);
+
     // Calculate grid column span (add 1 because grid starts at column 2, column 1 is timeline label)
     $: gridColumnStart = startDay + 1;
     $: gridColumnEnd = endDay + 2; // +2 because grid-column end is exclusive
-    
+
     function handleMouseEnter() {
         isHovered = true;
     }
-    
+
     function handleMouseLeave() {
         isHovered = false;
         showDeleteConfirm = false;
     }
-    
+
     function handleDeleteClick(event: MouseEvent) {
         event.stopPropagation();
         showDeleteConfirm = true;
     }
-    
+
     function confirmDelete(event: MouseEvent) {
         event.stopPropagation();
         deleteTask(id);
         showDeleteConfirm = false;
     }
-    
+
     function cancelDelete(event: MouseEvent) {
         event.stopPropagation();
         showDeleteConfirm = false;
@@ -46,6 +55,7 @@
     class="major-task-bar"
     id={"major-task-" + id}
     class:hovered={isHovered}
+    class:highlighted={isHighlighted}
     style="background-color: {color}; grid-column: {gridColumnStart} / {gridColumnEnd};"
     on:mouseenter={handleMouseEnter}
     on:mouseleave={handleMouseLeave}
