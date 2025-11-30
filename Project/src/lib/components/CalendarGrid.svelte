@@ -17,6 +17,7 @@
 
     import TimeLine from './TIMELINE/timeLine.svelte';
     import SubtaskCard from './SubtaskCard.svelte';
+    import { page } from '$app/state';
 
     let currentHour = new Date().getHours();
     let draggedSubtaskKey: string | null = null;
@@ -66,9 +67,11 @@
     function handleSubtaskCardClick(subtask: any) {
         onSubtaskClick(subtask);
     }
-
+const uniqueTaskId : number[] = [];
     // Draw lines from each subtask to its major task
-    function drawLines() {
+    function drawLines() 
+    {
+        uniqueTaskId.length = 0; // Clear uniqueTaskId array
         const svg = document.getElementById('subtask-major-lines');
         const gridHeader = document.querySelector('.grid-header') as HTMLElement;
         if (!svg || !gridHeader) {
@@ -97,19 +100,38 @@
                 majorTaskId: 'major-task-' + subtask.majorTaskId
             });
             
+            var amountOfLinesOffset = 0;
+            let found = false;
+
+            for (let id of uniqueTaskId) 
+            {
+                amountOfLinesOffset += 1;
+                if (id === subtask.majorTaskId) 
+                {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) 
+            {
+                uniqueTaskId.push(subtask.id);
+            }
+
             if (!subtaskEl || !majorTaskEl) return;
 
             // Get bounding boxes
             const subRect = subtaskEl.getBoundingClientRect();
             const majorRect = majorTaskEl.getBoundingClientRect();
             const svgRect = svg.getBoundingClientRect();
-            var amountOfLinesOffset = 0;
+            
+            console.log("Amount of lines : " + amountOfLinesOffset);
 
             // Calculate positions, ensuring lines stay below header
-            const startX = subRect.left - (subRect.width / 1.2) + (amountOfLinesOffset * 5);
+            const startX = (subRect.left - (subRect.width * 2.5) - 12) + (amountOfLinesOffset * 5);
             const startY = Math.max(subRect.top - svgRect.top + (subRect.height / 2), headerHeight);
-            const endX = subRect.left - (subRect.width / 1.2)+ (amountOfLinesOffset * 5);
-            const endY = majorRect.top - 10; // Position off-screen above
+            const endX = startX;
+            const endY = (majorRect.top + pageYOffset) - 15; // Position off-screen above
 
             // Don't draw if subtask is scrolled above header
             if (subRect.top < svgRect.top + headerHeight) return;
@@ -130,7 +152,25 @@
             line.setAttribute('stroke-width', '3');
             line.setAttribute('opacity', '0.8');
             line.setAttribute('pointer-events', 'none');
+            line.setAttribute('z-index', '50');
             svg.appendChild(line);
+
+            const line2x = startX + 15;
+
+            const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line2.setAttribute('x1', line2x.toString());
+            line2.setAttribute('y1', startY.toString());
+            line2.setAttribute('x2', startX.toString());
+            line2.setAttribute('y2', startY.toString());
+            line2.setAttribute('stroke', color);
+            line2.setAttribute('stroke-width', '3');
+            line2.setAttribute('opacity', '0.8');
+            line2.setAttribute('pointer-events', 'none');
+            line2.setAttribute('z-index', '50');
+
+            svg.appendChild(line2);
+
+            svg.style.zIndex = '1';
             
             console.log('Line created with color:', color);
         });
