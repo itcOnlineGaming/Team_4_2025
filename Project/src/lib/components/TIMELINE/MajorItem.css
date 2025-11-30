@@ -1,4 +1,4 @@
-   .major-task-bar {
+.major-task-bar {
         height: 30px;
         border-radius: 15px;
         display: flex;
@@ -12,6 +12,8 @@
         cursor: pointer;
         position: relative;
         z-index: 48;
+        width: calc(100%); /* Make major task bar 10px wider than its container */
+        left: -30px; /* Center the extra width */
     }
     
 .major-task-bar.hovered {

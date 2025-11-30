@@ -106,6 +106,17 @@ export function createNewTask(
   };
 }
 
+/**
+ * Update a major task by id, merging new fields.
+ */
+export function updateMajorTask(taskId: string, updates: Partial<MajorTask>): void {
+  majorTasks.update(tasks =>
+    tasks.map(task =>
+      task.id === taskId ? { ...task, ...updates } : task
+    )
+  );
+}
+
 // Helper function to delete a task
 export function deleteTask(taskId: string): void {
   majorTasks.update(tasks => tasks.filter(task => task.id !== taskId));

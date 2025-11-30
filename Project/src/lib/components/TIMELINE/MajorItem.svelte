@@ -45,11 +45,13 @@
 
     function handleMouseEnter() {
         isHovered = true;
+        hoveredMajorTaskId.set(id); // Highlight all subtasks linked to this major task
     }
 
     function handleMouseLeave() {
         isHovered = false;
         showDeleteConfirm = false;
+        hoveredMajorTaskId.set(null); // Remove highlight from subtasks
     }
 
     function handleDeleteClick(event: MouseEvent) {

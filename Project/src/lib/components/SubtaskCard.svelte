@@ -271,8 +271,14 @@
             class="subtask-card"
             id={"subtask-" + subtask.id}
             class:minimal={!showText}
-            class:highlighted={$hoveredSubtaskId !== null && ($hoveredSubtaskId === subtask.id || $hoveredMajorTaskId === subtask.majorTaskId)}
-            class:dimmed={$hoveredSubtaskId !== null && !($hoveredSubtaskId === subtask.id || $hoveredMajorTaskId === subtask.majorTaskId)}
+            class:highlighted={
+                ($hoveredSubtaskId !== null && ($hoveredSubtaskId === subtask.id || $hoveredMajorTaskId === subtask.majorTaskId)) ||
+                ($hoveredMajorTaskId !== null && $hoveredMajorTaskId === subtask.majorTaskId)
+            }
+            class:dimmed={
+                ($hoveredMajorTaskId !== null && $hoveredMajorTaskId !== subtask.majorTaskId) ||
+                ($hoveredSubtaskId !== null && !($hoveredSubtaskId === subtask.id || $hoveredMajorTaskId === subtask.majorTaskId))
+            }
             on:mouseenter={() => {
                 hoveredSubtaskId.set(subtask.id);
                 hoveredMajorTaskId.set(subtask.majorTaskId || null);

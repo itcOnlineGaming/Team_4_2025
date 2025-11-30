@@ -62,6 +62,28 @@
         }
 
         onEventMove(from, to);
+
+        // After drag-and-drop, rescale major task bar to fit subtasks
+        // Find all subtasks for the same major task
+        setTimeout(() => {
+            // Always update startDay and endDay to reflect all linked subtasks
+            const movedSubtask = Object.values(eventsIndex).find((s: any) => s.date === to.date && s.startTime === to.time);
+            if (movedSubtask && movedSubtask.majorTaskId) {
+                const allLinkedSubtasks = Object.values(eventsIndex).filter((s: any) => s.majorTaskId === movedSubtask.majorTaskId);
+                const dayIndices = allLinkedSubtasks.map((s: any) => {
+                    const idx = weekDates.findIndex(d => d.toISOString().split('T')[0] === s.date);
+                    return idx + 1; // startDay/endDay are 1-based
+                }).filter(idx => idx > 0);
+                if (dayIndices.length > 0) {
+                    const minDay = Math.min(...dayIndices);
+                    const maxDay = Math.max(...dayIndices);
+                    import('../stores/majorTasks').then(mod => {
+                        mod.updateMajorTask(movedSubtask.majorTaskId, { startDay: minDay, endDay: maxDay });
+                    });
+                }
+            }
+        }, 0);
+
         draggedSubtaskKey = null;
         draggedFromKey = null;
     }
@@ -154,7 +176,7 @@ const uniqueTaskId : number[] = [];
             // Determine if this line should be highlighted or dimmed
             let lineOpacity = 0.9;
             let lineFilter = '';
-            if (hoveredSubId !== null) {
+            if (hoveredSubId !== null || hoveredMajorId !== null) {
                 const isHighlighted = (hoveredSubId === subtask.id || hoveredMajorId === subtask.majorTaskId);
                 if (!isHighlighted) {
                     lineOpacity = 0.3;
@@ -200,6 +222,25 @@ const uniqueTaskId : number[] = [];
     
     afterUpdate(() => {
         drawLines();
+
+        // Recalculate major task startDay/endDay for all major tasks when eventsIndex changes
+        setTimeout(() => {
+            const majorTaskIds = Array.from(new Set(Object.values(eventsIndex).map((s: any) => s.majorTaskId).filter(Boolean)));
+            for (const majorTaskId of majorTaskIds) {
+                const allLinkedSubtasks = Object.values(eventsIndex).filter((s: any) => s.majorTaskId === majorTaskId);
+                const dayIndices = allLinkedSubtasks.map((s: any) => {
+                    const idx = weekDates.findIndex(d => d.toISOString().split('T')[0] === s.date);
+                    return idx + 1;
+                }).filter(idx => idx > 0);
+                if (dayIndices.length > 0) {
+                    const minDay = Math.min(...dayIndices);
+                    const maxDay = Math.max(...dayIndices);
+                    import('../stores/majorTasks').then(mod => {
+                        mod.updateMajorTask(majorTaskId, { startDay: minDay, endDay: maxDay });
+                    });
+                }
+            }
+        }, 0);
     });
 
     // Subscribe to hoveredSubtaskId and hoveredMajorTaskId to redraw lines on highlight/dim change
