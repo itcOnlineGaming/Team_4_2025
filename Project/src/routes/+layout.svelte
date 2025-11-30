@@ -1,6 +1,6 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
-	import SnackbarContainer from '../../node_modules/snackbar-project/demo-standalone/src/lib/snackbar/SnackbarContainer.svelte';
+	import SnackbarContainer from 'snackbar-project/demo-standalone/src/lib/snackbar/SnackbarContainer.svelte';
 	let { children } = $props();
 </script>
 
