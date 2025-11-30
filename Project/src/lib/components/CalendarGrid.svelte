@@ -136,11 +136,11 @@ const uniqueTaskId : number[] = [];
             
             console.log("Amount of lines : " + amountOfLinesOffset);
 
-            // Calculate positions, ensuring lines stay below header
-            const startX = (subRect.left - (subRect.width * 2.5) - 12) + (amountOfLinesOffset * 5);
+            // Calculate positions: line starts a few pixels to the left of the subtask and goes straight up
+            const startX = subRect.left - svgRect.left - 8 + (amountOfLinesOffset * 5); // 8px to the left of subtask
             const startY = Math.max(subRect.top - svgRect.top + (subRect.height / 2), headerHeight);
             const endX = startX;
-            const endY = (majorRect.top + pageYOffset) - 15; // Position off-screen above
+            const endY = Math.max(majorRect.top - svgRect.top + 4, headerHeight); // 4px offset from top of major task
 
             // Don't draw if subtask is scrolled above header
             if (subRect.top < svgRect.top + headerHeight) return;
