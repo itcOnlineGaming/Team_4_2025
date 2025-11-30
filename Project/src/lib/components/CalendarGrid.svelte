@@ -206,17 +206,32 @@ const uniqueTaskId : number[] = [];
     const unsubHoverSub = hoveredSubtaskId.subscribe(() => drawLines());
     const unsubHoverMajor = hoveredMajorTaskId.subscribe(() => drawLines());
 
+    let resizeObservers: ResizeObserver[] = [];
+
     onMount(() => {
         // Redraw lines on scroll
         if (gridBodyElement) {
             gridBodyElement.addEventListener('scroll', drawLines);
         }
+
+        // Observe size changes for all subtask and major task elements
+        setTimeout(() => {
+            const subtaskEls = Array.from(document.querySelectorAll('[id^="subtask-"]'));
+            const majorTaskEls = Array.from(document.querySelectorAll('[id^="major-task-"]'));
+            [...subtaskEls, ...majorTaskEls].forEach(el => {
+                const observer = new ResizeObserver(() => drawLines());
+                observer.observe(el);
+                resizeObservers.push(observer);
+            });
+        }, 500);
     });
 
     onDestroy(() => {
         if (gridBodyElement) {
             gridBodyElement.removeEventListener('scroll', drawLines);
         }
+        resizeObservers.forEach(obs => obs.disconnect());
+        resizeObservers = [];
         unsubHoverSub();
         unsubHoverMajor();
     });
