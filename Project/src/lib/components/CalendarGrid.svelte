@@ -2,7 +2,7 @@
 <script lang="ts">
     import { afterUpdate, onMount, onDestroy } from 'svelte';
     import './style.css';
-    import { hoveredSubtaskId } from '../stores/hoverHighlight';
+    import { hoveredSubtaskId, hoveredMajorTaskId } from '../stores/hoverHighlight';
     import { get } from 'svelte/store';
     export let weekDates: Date[];
     export let timeSlots: string[];
@@ -71,8 +71,11 @@
     }
 const uniqueTaskId : number[] = [];
     // Draw lines from each subtask to its major task
+    // ... rest of script ...
+
     function drawLines() 
     {
+        if (typeof window === "undefined") return;
         uniqueTaskId.length = 0; // Clear uniqueTaskId array
         const svg = document.getElementById('subtask-major-lines');
         const gridHeader = document.querySelector('.grid-header') as HTMLElement;
@@ -87,6 +90,10 @@ const uniqueTaskId : number[] = [];
         while (svg.firstChild) svg.removeChild(svg.firstChild);
 
         console.log('Drawing lines, eventsIndex:', eventsIndex);
+
+        // Get hovered values
+        const hoveredSubId = get(hoveredSubtaskId);
+        const hoveredMajorId = get(hoveredMajorTaskId);
         
         Object.values(eventsIndex).forEach((subtask: any) => {
             console.log('Checking subtask:', subtask.id, 'majorTaskId:', subtask.majorTaskId);
@@ -107,17 +114,17 @@ const uniqueTaskId : number[] = [];
 
             for (let id of uniqueTaskId) 
             {
-                amountOfLinesOffset += 1;
                 if (id === subtask.majorTaskId) 
                 {
                     found = true;
                     break;
                 }
+                amountOfLinesOffset += 1;
             }
             
             if (!found) 
             {
-                uniqueTaskId.push(subtask.id);
+                uniqueTaskId.push(subtask.majorTaskId);
             }
 
             if (!subtaskEl || !majorTaskEl) return;
@@ -144,6 +151,17 @@ const uniqueTaskId : number[] = [];
             const computedStyle = window.getComputedStyle(majorTaskEl);
             const color = computedStyle.backgroundColor || '#333';
 
+            // Determine if this line should be highlighted or dimmed
+            let lineOpacity = 0.9;
+            let lineFilter = '';
+            if (hoveredSubId !== null) {
+                const isHighlighted = (hoveredSubId === subtask.id || hoveredMajorId === subtask.majorTaskId);
+                if (!isHighlighted) {
+                    lineOpacity = 0.3;
+                    lineFilter = 'grayscale(0.7) brightness(0.7)';
+                }
+            }
+
             // Create SVG line
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x1', startX.toString());
@@ -152,9 +170,10 @@ const uniqueTaskId : number[] = [];
             line.setAttribute('y2', endY.toString());
             line.setAttribute('stroke', color);
             line.setAttribute('stroke-width', '3');
-            line.setAttribute('opacity', '0.8');
+            line.setAttribute('opacity', lineOpacity.toString());
             line.setAttribute('pointer-events', 'none');
             line.setAttribute('z-index', '50');
+            if (lineFilter) line.setAttribute('style', `filter: ${lineFilter};`);
             svg.appendChild(line);
 
             const line2x = startX + 15;
@@ -166,9 +185,10 @@ const uniqueTaskId : number[] = [];
             line2.setAttribute('y2', startY.toString());
             line2.setAttribute('stroke', color);
             line2.setAttribute('stroke-width', '3');
-            line2.setAttribute('opacity', '0.8');
+            line2.setAttribute('opacity', lineOpacity.toString());
             line2.setAttribute('pointer-events', 'none');
             line2.setAttribute('z-index', '50');
+            if (lineFilter) line2.setAttribute('style', `filter: ${lineFilter};`);
 
             svg.appendChild(line2);
 
@@ -181,18 +201,24 @@ const uniqueTaskId : number[] = [];
     afterUpdate(() => {
         drawLines();
     });
-    
+
+    // Subscribe to hoveredSubtaskId and hoveredMajorTaskId to redraw lines on highlight/dim change
+    const unsubHoverSub = hoveredSubtaskId.subscribe(() => drawLines());
+    const unsubHoverMajor = hoveredMajorTaskId.subscribe(() => drawLines());
+
     onMount(() => {
         // Redraw lines on scroll
         if (gridBodyElement) {
             gridBodyElement.addEventListener('scroll', drawLines);
         }
     });
-    
+
     onDestroy(() => {
         if (gridBodyElement) {
             gridBodyElement.removeEventListener('scroll', drawLines);
         }
+        unsubHoverSub();
+        unsubHoverMajor();
     });
 </script>
 
