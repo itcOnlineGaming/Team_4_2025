@@ -26,6 +26,8 @@
 	},
 	"dependencies": {
 		"@rwm-p2-2025-emily-breen/srl-sidebar": "git+https://github.com/itcOnlineGaming/RWM_P2_2025_Emily_Breen.git",
-		"snackbar-project": "^1.0.11"
+		"snackbar-project": "^1.0.11",
+		"task-battle": "github:Splashdamage115/RWM_P0_c00283152#v1.0.1"
+
 	}
 }

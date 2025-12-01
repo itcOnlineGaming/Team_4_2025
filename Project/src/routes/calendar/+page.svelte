@@ -3,6 +3,74 @@
     import { theme } from '../../lib/theme';
     import Calendar from '$lib/components/Calendar.svelte';
     import FeedBackButton from '$lib/components/FeedBackButton.svelte';
+    import { subtasks, updateSubtask } from '$lib/stores/subtasks';
+
+    interface TaskBattleResult {
+        id: string;
+        name: string;
+        description: string;
+        priority: 'high' | 'medium' | 'low';
+        winner: boolean;
+    }
+
+    function processTaskBattleResults() {
+        try {
+            const resultsJson = localStorage.getItem('taskBattleResults');
+            if (!resultsJson) return;
+
+            const battleResults: TaskBattleResult[] = JSON.parse(resultsJson);
+            if (!Array.isArray(battleResults) || battleResults.length === 0) return;
+
+            // Get current subtasks
+            let currentSubtasks: any[] = [];
+            const unsubscribe = subtasks.subscribe(tasks => {
+                currentSubtasks = tasks;
+            });
+            unsubscribe();
+
+            // Update subtasks based on battle results
+            battleResults.forEach(battleResult => {
+                // Find matching subtasks by ID or name
+                const matchingTasks = currentSubtasks.filter(subtask => 
+                    subtask.id.toString() === battleResult.id || 
+                    subtask.title.toLowerCase().includes(battleResult.name.toLowerCase()) ||
+                    battleResult.name.toLowerCase().includes(subtask.title.toLowerCase())
+                );
+
+                matchingTasks.forEach(matchingTask => {
+                    const updates: any = {
+                        priority: battleResult.priority
+                    };
+
+                    // If this task won the battle, give it special treatment
+                    if (battleResult.winner) {
+                        // Update priority to high if it's not already
+                        if (battleResult.priority !== 'high') {
+                            updates.priority = 'high';
+                        }
+                        
+                        // Could also add special status or other enhancements
+                        // For example, you might want to move winners to earlier time slots
+                        // or add a special marker in the description
+                        if (!matchingTask.description.includes('[WINNER]')) {
+                            updates.description = matchingTask.description + ' [WINNER]';
+                        }
+                    }
+
+                    // Apply the updates
+                    updateSubtask(matchingTask.id, updates);
+                });
+            });
+
+            // Clear the processed battle results
+            localStorage.removeItem('taskBattleResults');
+
+            console.log('TaskBattle results processed and applied to calendar tasks');
+
+        } catch (error) {
+            console.error('Error processing TaskBattle results:', error);
+        }
+    }
 
     onMount(() => {
         // Set theme variables used by calendar styles
@@ -12,6 +80,9 @@
         document.documentElement.style.setProperty('--buttonHover', theme.buttonHover);
         document.documentElement.style.setProperty('--buttonText', theme.buttonText);
         document.documentElement.style.setProperty('--textPrimary', theme.textPrimary);
+
+        // Process any pending TaskBattle results
+        processTaskBattleResults();
     });
 
     function handleTaskBattle() {

@@ -1,24 +1,31 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { TaskBattleTournament, type Task } from 'task-battle/src/lib/';
 
-  interface Task {
-    id: string;
-    name: string;
-    description: string;
-    winner?: boolean;
-    priority?: 'high' | 'medium' | 'low';
+  let taskList: Task[] = [];
+
+  function handleTournamentComplete(winner: Task) {
+    console.log('Tournament completed! Winner:', winner);
+    // Here you could save results, navigate, etc.
   }
 
-  let tasks: Task[] = [];
+  function handleGoBack() {
+    console.log('Going back...');
+    history.back();
+  }
 
-  onMount(() => {
+  function loadTasks() {
+    // Load or define your tasks here
     try {
-      const stored = localStorage.getItem('tasks');
-      tasks = stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      tasks = [];
+      const storedTasks = localStorage.getItem('tasks');
+      if (storedTasks) {
+        taskList = JSON.parse(storedTasks);
+      }
+    } catch (error) {
+      console.error('Error loading tasks from localStorage:', error);
+      taskList = [];
     }
-  });
+  }
+  loadTasks();
 </script>
 
 <svelte:head>
@@ -26,5 +33,13 @@
 </svelte:head>
 
 <main>
-  
+  <TaskBattleTournament tasks={taskList}
+  onTournamentComplete={(winner) => {
+    console.log('Tournament winner:', winner);
+    // Handle the result - save to database, navigate, etc.
+  }}
+  onGoBack={() => {
+    // Handle back navigation
+    history.back(); // or your custom navigation
+  }}/>
 </main>
