@@ -10,6 +10,7 @@
     export let pixelsPerHour: number;
     export let isBeingDragged: boolean = false;
     export let onDragStart: (e: MouseEvent) => void;
+    export let onDragEnd: () => void;
     export let onClick: () => void;
     export let onResize: (newStartMinutes: number, newEndMinutes: number) => void;
     export let onStatusChange: (newStatus: 'pending' | 'completed' | 'cancelled') => void;
@@ -139,6 +140,9 @@
 
                     document.body.style.userSelect = '';
                     document.body.style.webkitUserSelect = '';
+
+                    // Call onDragEnd to notify parent component
+                    onDragEnd();
                 }
 
                 window.removeEventListener('mousemove', handleMousemoveStart);
@@ -150,24 +154,120 @@
             window.addEventListener('mouseup', handleMouseup);
         };
 
+        // Touch event handlers for mobile support
+        const handleTouchstart = (e: TouchEvent) => {
+            if ((e.target as HTMLElement).closest('.status-badge') ||
+                (e.target as HTMLElement).closest('.resize-handle')) {
+                return;
+            }
+
+            const touch = e.touches[0];
+            dragStartX = touch.clientX;
+            dragStartY = touch.clientY;
+            hasMoved = false;
+
+            const rect = node.getBoundingClientRect();
+            offsetX = touch.clientX - rect.left;
+            offsetY = touch.clientY - rect.top;
+
+            const handleTouchmoveStart = (e: TouchEvent) => {
+                const touch = e.touches[0];
+                const deltaX = Math.abs(touch.clientX - dragStartX);
+                const deltaY = Math.abs(touch.clientY - dragStartY);
+
+                if (!isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
+                    isDragging = true;
+                    hasMoved = true;
+                    e.preventDefault();
+
+                    document.body.style.userSelect = 'none';
+                    document.body.style.webkitUserSelect = 'none';
+                    document.body.style.touchAction = 'none';
+
+                    dragGhost = node.cloneNode(true) as HTMLElement;
+                    dragGhost.classList.add('drag-ghost');
+                    dragGhost.style.position = 'fixed';
+                    dragGhost.style.left = `${rect.left}px`;
+                    dragGhost.style.top = `${rect.top}px`;
+                    dragGhost.style.width = `${rect.width}px`;
+                    dragGhost.style.height = `${rect.height}px`;
+                    dragGhost.style.pointerEvents = 'none';
+                    dragGhost.style.zIndex = '2000';
+                    dragGhost.style.opacity = '0.8';
+
+                    document.body.appendChild(dragGhost);
+                    node.style.opacity = '0.3';
+
+                    // Create a synthetic MouseEvent for onDragStart
+                    const syntheticEvent = new MouseEvent('mousedown', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY,
+                        bubbles: true
+                    });
+                    onDragStart(syntheticEvent);
+
+                    window.removeEventListener('touchmove', handleTouchmoveStart);
+                    window.addEventListener('touchmove', handleTouchmove, { passive: false });
+                }
+            };
+
+            const handleTouchmove = (e: TouchEvent) => {
+                if (!isDragging || !dragGhost) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                dragGhost.style.left = `${touch.clientX - offsetX}px`;
+                dragGhost.style.top = `${touch.clientY - offsetY}px`;
+            };
+
+            const handleTouchend = () => {
+                if (isDragging) {
+                    dragGhost?.remove();
+                    dragGhost = null;
+                    node.style.opacity = '1';
+                    isDragging = false;
+
+                    document.body.style.userSelect = '';
+                    document.body.style.webkitUserSelect = '';
+                    document.body.style.touchAction = '';
+
+                    // Call onDragEnd to notify parent component
+                    onDragEnd();
+                }
+
+                window.removeEventListener('touchmove', handleTouchmoveStart);
+                window.removeEventListener('touchmove', handleTouchmove);
+                window.removeEventListener('touchend', handleTouchend);
+                window.removeEventListener('touchcancel', handleTouchend);
+            };
+
+            window.addEventListener('touchmove', handleTouchmoveStart, { passive: false });
+            window.addEventListener('touchend', handleTouchend);
+            window.addEventListener('touchcancel', handleTouchend);
+        };
+
         node.addEventListener('mousedown', handleMousedown);
+        node.addEventListener('touchstart', handleTouchstart, { passive: true });
 
         return {
             destroy() {
                 node.removeEventListener('mousedown', handleMousedown);
+                node.removeEventListener('touchstart', handleTouchstart);
                 document.body.style.userSelect = '';
                 document.body.style.webkitUserSelect = '';
+                document.body.style.touchAction = '';
             }
         };
     }
 
-    function handleResizeStart(e: MouseEvent, handle: 'top' | 'bottom') {
+    function handleResizeStart(e: MouseEvent | TouchEvent, handle: 'top' | 'bottom') {
         e.stopPropagation();
         e.preventDefault();
 
         isResizing = true;
         resizeHandle = handle;
-        initialY = e.clientY;
+
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        initialY = clientY;
         initialStartMinutes = timeToMinutes(subtask.startTime);
         initialEndMinutes = timeToMinutes(subtask.endTime);
         visualStartMinutes = initialStartMinutes;
@@ -176,12 +276,16 @@
         document.body.style.userSelect = 'none';
         document.body.style.webkitUserSelect = 'none';
         document.body.style.cursor = 'ns-resize';
+        if ('touches' in e) {
+            document.body.style.touchAction = 'none';
+        }
 
-        const handleMouseMove = (e: MouseEvent) => {
+        const handleMove = (e: MouseEvent | TouchEvent) => {
             if (!isResizing) return;
             e.preventDefault();
 
-            const deltaY = e.clientY - initialY;
+            const currentY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+            const deltaY = currentY - initialY;
             const deltaMinutes = (deltaY / pixelsPerHour) * 60;
 
             if (resizeHandle === 'bottom') {
@@ -199,7 +303,7 @@
             }
         };
 
-        const handleMouseUp = () => {
+        const handleEnd = () => {
             if (resizeHandle === 'bottom') {
                 onResize(visualStartMinutes, visualEndMinutes);
             } else if (resizeHandle === 'top') {
@@ -212,13 +316,20 @@
             document.body.style.userSelect = '';
             document.body.style.webkitUserSelect = '';
             document.body.style.cursor = '';
+            document.body.style.touchAction = '';
 
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('mousemove', handleMove as EventListener);
+            window.removeEventListener('mouseup', handleEnd);
+            window.removeEventListener('touchmove', handleMove as EventListener);
+            window.removeEventListener('touchend', handleEnd);
+            window.removeEventListener('touchcancel', handleEnd);
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
+        window.addEventListener('mousemove', handleMove as EventListener);
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('touchmove', handleMove as EventListener, { passive: false });
+        window.addEventListener('touchend', handleEnd);
+        window.addEventListener('touchcancel', handleEnd);
     }
 
     function handleCardClick() {
@@ -266,32 +377,39 @@
         "
             use:dragSubtask
     >
-        <div class="resize-handle resize-top" on:mousedown={(e) => handleResizeStart(e, 'top')} role="button" tabindex="0" aria-label="Resize top"></div>
         <div
-            class="subtask-card"
-            id={"subtask-" + subtask.id}
-            class:minimal={!showText}
-            class:highlighted={
+                class="resize-handle resize-top"
+                on:mousedown={(e) => handleResizeStart(e, 'top')}
+                on:touchstart={(e) => handleResizeStart(e, 'top')}
+                role="button"
+                tabindex="0"
+                aria-label="Resize top"
+        ></div>
+        <div
+                class="subtask-card"
+                id={"subtask-" + subtask.id}
+                class:minimal={!showText}
+                class:highlighted={
                 ($hoveredSubtaskId !== null && ($hoveredSubtaskId === subtask.id || $hoveredMajorTaskId === subtask.majorTaskId)) ||
                 ($hoveredMajorTaskId !== null && $hoveredMajorTaskId === subtask.majorTaskId)
             }
-            class:dimmed={
+                class:dimmed={
                 ($hoveredMajorTaskId !== null && $hoveredMajorTaskId !== subtask.majorTaskId) ||
                 ($hoveredSubtaskId !== null && !($hoveredSubtaskId === subtask.id || $hoveredMajorTaskId === subtask.majorTaskId))
             }
-            on:mouseenter={() => {
+                on:mouseenter={() => {
                 hoveredSubtaskId.set(subtask.id);
                 hoveredMajorTaskId.set(subtask.majorTaskId || null);
             }}
-            on:mouseleave={() => {
+                on:mouseleave={() => {
                 hoveredSubtaskId.set(null);
                 hoveredMajorTaskId.set(null);
             }}
-            on:click={handleCardClick}
-            on:keydown={(e) => e.key === 'Enter' && handleCardClick()}
-            role="button"
-            tabindex="0"
-            style="border-color: {majorTaskColor};"
+                on:click={handleCardClick}
+                on:keydown={(e) => e.key === 'Enter' && handleCardClick()}
+                role="button"
+                tabindex="0"
+                style="border-color: {majorTaskColor};"
         >
             <div class="task-badges">
                 <div class="priority-badge {subtask.priority || 'medium'}">
@@ -331,7 +449,14 @@
                 {/if}
             {/if}
         </div>
-        <div class="resize-handle resize-bottom" on:mousedown={(e) => handleResizeStart(e, 'bottom')} role="button" tabindex="0" aria-label="Resize bottom"></div>
+        <div
+                class="resize-handle resize-bottom"
+                on:mousedown={(e) => handleResizeStart(e, 'bottom')}
+                on:touchstart={(e) => handleResizeStart(e, 'bottom')}
+                role="button"
+                tabindex="0"
+                aria-label="Resize bottom"
+        ></div>
     </div>
 </div>
 
@@ -353,6 +478,7 @@
         box-sizing: border-box;
         cursor: grab;
         z-index: 51;
+        touch-action: none;
     }
 
     .subtask-positioner.being-dragged {
@@ -374,10 +500,25 @@
         opacity: 0;
         transition: opacity 0.2s;
         border-radius: 4px;
+        touch-action: none;
     }
 
     .subtask-positioner:hover .resize-handle {
         opacity: 1;
+    }
+
+    /* Make resize handles more visible on touch devices */
+    @media (hover: none) and (pointer: coarse) {
+        .resize-handle {
+            opacity: 0.3;
+            height: 16px;
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .resize-handle:active {
+            opacity: 1;
+            background: rgba(59, 130, 246, 0.5);
+        }
     }
 
     .resize-top {
@@ -414,6 +555,7 @@
         -webkit-user-select: none;
         box-sizing: border-box;
         overflow: hidden;
+        touch-action: none;
     }
 
     .subtask-card.highlighted {
@@ -504,6 +646,15 @@
         z-index: 52;
     }
 
+    /* Make status badge larger on touch devices */
+    @media (hover: none) and (pointer: coarse) {
+        .status-badge {
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+        }
+    }
+
     .status-badge.completed {
         background: #22c55e;
         border-color: #22c55e;
@@ -559,9 +710,18 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
 
+    /* Disable hover effects on touch devices */
+    @media (hover: none) and (pointer: coarse) {
+        .subtask-positioner:hover .subtask-card {
+            transform: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    }
+
     :global(.drag-ghost) {
         filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
         user-select: none !important;
         -webkit-user-select: none !important;
+        touch-action: none !important;
     }
 </style>

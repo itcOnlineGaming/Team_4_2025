@@ -1,4 +1,3 @@
-
 <script lang="ts">
     import { afterUpdate, onMount, onDestroy } from 'svelte';
     import './style.css';
@@ -9,7 +8,7 @@
     export let daysOfWeek: string[];
     export let eventsIndex: Record<string, any>;
     export let pixelsPerHour: number;
-export let handleCellClick: (date: string, time: string) => void;
+    export let handleCellClick: (date: string, time: string) => void;
     export let formatDate: (date: Date) => string;
     export let isToday: (date: Date) => boolean;
     export let onEventMove: (from: {date: string, time: string}, to: {date: string, time: string}) => void;
@@ -24,33 +23,38 @@ export let handleCellClick: (date: string, time: string) => void;
     let currentHour = new Date().getHours();
     let draggedSubtaskKey: string | null = null;
     let draggedFromKey: string | null = null;
-let gridBodyElement: HTMLElement;
+    let gridBodyElement: HTMLElement;
+    let lastTouchX: number = 0;
+    let lastTouchY: number = 0;
 
-// Subtask creation modal state
-let showSubtaskModal = false;
-let newSubtaskDate = '';
-let newSubtaskTime = '';
-let newSubtaskTitle = '';
+    // Subtask creation modal state
+    let showSubtaskModal = false;
+    let newSubtaskDate = '';
+    let newSubtaskTime = '';
+    let newSubtaskTitle = '';
 
-import { createNewSubtask, subtasks } from '../stores/subtasks';
+    import { createNewSubtask, subtasks } from '../stores/subtasks';
 
-function handleCreateSubtask() {
-    const newSubtask = createNewSubtask(
-        newSubtaskDate,
-        newSubtaskTime,
-        newSubtaskTime,
-        newSubtaskTitle,
-        '',
-        'pending'
-    );
-    subtasks.update(tasks => [...tasks, newSubtask]);
-    showSubtaskModal = false;
-}
+    function handleCreateSubtask() {
+        const newSubtask = createNewSubtask(
+            newSubtaskDate,
+            newSubtaskTime,
+            newSubtaskTime,
+            newSubtaskTitle,
+            '',
+            'pending'
+        );
+        subtasks.update(tasks => [...tasks, newSubtask]);
+        showSubtaskModal = false;
+    }
 
-function openSubtaskModal(date: string, time: string) {
-    console.log('openSubtaskModal called:', date, time);
-    handleCellClick(date, time);
-}
+    function openSubtaskModal(date: string, time: string) {
+        console.log('openSubtaskModal called:', date, time);
+        // Only open modal if we're not in a drag operation
+        if (!draggedSubtaskKey) {
+            handleCellClick(date, time);
+        }
+    }
 
     function isPastDate(date: Date): boolean {
         const today = new Date();
@@ -65,12 +69,39 @@ function openSubtaskModal(date: string, time: string) {
         draggedFromKey = key;
     }
 
-    function handleCellDrop(date: string, time: string) {
+    function handleSubtaskDragEnd() {
+        // Reset drag state when drag operation ends (whether successful or cancelled)
+        draggedSubtaskKey = null;
+        draggedFromKey = null;
+    }
+
+    function handleCellDrop(date: string, time: string, fromTouch: boolean = false) {
         if (!draggedSubtaskKey) return;
+
+        // If this is from a touch event, use the last touch coordinates to find the actual target cell
+        let targetDate = date;
+        let targetTime = time;
+
+        if (fromTouch && lastTouchX && lastTouchY) {
+            const element = document.elementFromPoint(lastTouchX, lastTouchY);
+            const cell = element?.closest('.calendar-cell');
+
+            if (cell) {
+                // Extract date and time from the cell's data or position
+                const cellIndex = Array.from(cell.parentElement?.children || []).indexOf(cell as Element) - 1;
+                const rowElement = cell.closest('.time-row');
+                const rowIndex = Array.from(gridBodyElement.querySelectorAll('.time-row')).indexOf(rowElement as Element);
+
+                if (cellIndex >= 0 && rowIndex >= 0 && cellIndex < weekDates.length) {
+                    targetDate = weekDates[cellIndex].toISOString().split('T')[0];
+                    targetTime = timeSlots[rowIndex];
+                }
+            }
+        }
 
         const fromParts = draggedSubtaskKey.split('|');
         const from = { date: fromParts[0], time: fromParts[1] };
-        const to = { date, time };
+        const to = { date: targetDate, time: targetTime };
 
         // Allow dropping back to same cell
         if (from.date === to.date && from.time === to.time) {
@@ -80,7 +111,7 @@ function openSubtaskModal(date: string, time: string) {
         }
 
         // Don't trigger move if dropped on occupied cell
-        const targetKey = `${date}|${time}`;
+        const targetKey = `${targetDate}|${targetTime}`;
         if (eventsIndex[targetKey]) {
             draggedSubtaskKey = null;
             draggedFromKey = null;
@@ -117,11 +148,11 @@ function openSubtaskModal(date: string, time: string) {
     function handleSubtaskCardClick(subtask: any) {
         onSubtaskClick(subtask);
     }
-const uniqueTaskId : number[] = [];
+    const uniqueTaskId : number[] = [];
     // Draw lines from each subtask to its major task
     // ... rest of script ...
 
-    function drawLines() 
+    function drawLines()
     {
         if (typeof window === "undefined") return;
         uniqueTaskId.length = 0; // Clear uniqueTaskId array
@@ -131,9 +162,9 @@ const uniqueTaskId : number[] = [];
             console.log('SVG element or grid header not found');
             return;
         }
-        
+
         const headerHeight = gridHeader.offsetHeight;
-        
+
         // Clear previous lines
         while (svg.firstChild) svg.removeChild(svg.firstChild);
 
@@ -142,35 +173,35 @@ const uniqueTaskId : number[] = [];
         // Get hovered values
         const hoveredSubId = get(hoveredSubtaskId);
         const hoveredMajorId = get(hoveredMajorTaskId);
-        
+
         Object.values(eventsIndex).forEach((subtask: any) => {
             console.log('Checking subtask:', subtask.id, 'majorTaskId:', subtask.majorTaskId);
             if (!subtask.majorTaskId) return;
-            
+
             const subtaskEl = document.getElementById('subtask-' + subtask.id);
             const majorTaskEl = document.getElementById('major-task-' + subtask.majorTaskId);
-            
+
             console.log('Elements found:', {
                 subtaskEl: !!subtaskEl,
                 majorTaskEl: !!majorTaskEl,
                 subtaskId: 'subtask-' + subtask.id,
                 majorTaskId: 'major-task-' + subtask.majorTaskId
             });
-            
+
             var amountOfLinesOffset = 0;
             let found = false;
 
-            for (let id of uniqueTaskId) 
+            for (let id of uniqueTaskId)
             {
-                if (id === subtask.majorTaskId) 
+                if (id === subtask.majorTaskId)
                 {
                     found = true;
                     break;
                 }
                 amountOfLinesOffset += 1;
             }
-            
-            if (!found) 
+
+            if (!found)
             {
                 uniqueTaskId.push(subtask.majorTaskId);
             }
@@ -181,7 +212,7 @@ const uniqueTaskId : number[] = [];
             const subRect = subtaskEl.getBoundingClientRect();
             const majorRect = majorTaskEl.getBoundingClientRect();
             const svgRect = svg.getBoundingClientRect();
-            
+
             console.log("Amount of lines : " + amountOfLinesOffset);
 
             // Calculate positions: line starts a few pixels to the left of the subtask and goes straight up
@@ -241,11 +272,11 @@ const uniqueTaskId : number[] = [];
             svg.appendChild(line2);
 
             svg.style.zIndex = '1';
-            
+
             console.log('Line created with color:', color);
         });
     }
-    
+
     afterUpdate(() => {
         drawLines();
 
@@ -281,6 +312,15 @@ const uniqueTaskId : number[] = [];
             gridBodyElement.addEventListener('scroll', drawLines);
         }
 
+        // Track touch coordinates during drag
+        const handleTouchMove = (e: TouchEvent) => {
+            if (draggedSubtaskKey && e.touches.length > 0) {
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+            }
+        };
+        document.addEventListener('touchmove', handleTouchMove);
+
         // Observe size changes for all subtask and major task elements
         setTimeout(() => {
             const subtaskEls = Array.from(document.querySelectorAll('[id^="subtask-"]'));
@@ -291,6 +331,47 @@ const uniqueTaskId : number[] = [];
                 resizeObservers.push(observer);
             });
         }, 500);
+
+        // Add global mouseup/touchend listeners to catch cancelled drags
+        const handleGlobalEnd = (e: MouseEvent | TouchEvent) => {
+            if (draggedSubtaskKey) {
+                // For touch events, try to determine where the touch ended
+                if (e instanceof TouchEvent && e.changedTouches.length > 0) {
+                    lastTouchX = e.changedTouches[0].clientX;
+                    lastTouchY = e.changedTouches[0].clientY;
+
+                    // Find the element at the touch point
+                    const element = document.elementFromPoint(lastTouchX, lastTouchY);
+                    const cell = element?.closest('.calendar-cell');
+
+                    if (cell) {
+                        // Extract date and time from the cell's position
+                        const cellIndex = Array.from(cell.parentElement?.children || []).indexOf(cell as Element) - 1;
+                        const rowElement = cell.closest('.time-row');
+                        const rowIndex = Array.from(gridBodyElement.querySelectorAll('.time-row')).indexOf(rowElement as Element);
+
+                        if (cellIndex >= 0 && rowIndex >= 0 && cellIndex < weekDates.length) {
+                            const targetDate = weekDates[cellIndex].toISOString().split('T')[0];
+                            const targetTime = timeSlots[rowIndex];
+                            handleCellDrop(targetDate, targetTime, true);
+                            return;
+                        }
+                    }
+                }
+
+                console.log('Global end event - resetting drag state');
+                draggedSubtaskKey = null;
+                draggedFromKey = null;
+            }
+        };
+        document.addEventListener('mouseup', handleGlobalEnd);
+        document.addEventListener('touchend', handleGlobalEnd);
+
+        return () => {
+            document.removeEventListener('mouseup', handleGlobalEnd);
+            document.removeEventListener('touchend', handleGlobalEnd);
+            document.removeEventListener('touchmove', handleTouchMove);
+        };
     });
 
     onDestroy(() => {
@@ -307,7 +388,7 @@ const uniqueTaskId : number[] = [];
 <div class="calendar-grid">
     <!-- SVG overlay for subtask-major task lines - positioned to stay with calendar, clipped by grid -->
     <svg id="subtask-major-lines" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; clip-path: inset(0 0 0 0);"></svg>
-    
+
     <div class="grid-header">
         <div class="time-column-header"></div>
         {#each weekDates as date, index}
@@ -315,9 +396,9 @@ const uniqueTaskId : number[] = [];
                 <div class="day-name">{daysOfWeek[index].toUpperCase()}</div>
                 <div class="day-number" class:today-number={isToday(date)}>
                     {formatDate(date)}
-</div>
+                </div>
 
-<!-- Custom modal removed. Use parent modal logic. -->
+                <!-- Custom modal removed. Use parent modal logic. -->
             </div>
         {/each}
     </div>
@@ -332,13 +413,14 @@ const uniqueTaskId : number[] = [];
                 {#each weekDates as date, dayIndex}
                     {@const dateStr = date.toISOString().split('T')[0]}
                     {@const key = `${dateStr}|${timeSlot}`}
-<div
+                    <div
                             class="calendar-cell"
                             class:current-hour={isToday(date) && currentHour === timeIndex}
                             class:past-cell={isPastDate(date)}
                             class:drop-target={draggedSubtaskKey && key !== draggedFromKey && !eventsIndex[key]}
                             on:mouseup={() => handleCellDrop(dateStr, timeSlot)}
-on:click={(event) => { event.stopPropagation(); openSubtaskModal(dateStr, timeSlot); }}
+                            on:click={(event) => { event.stopPropagation(); openSubtaskModal(dateStr, timeSlot); }}
+                            on:dragover={(e) => e.preventDefault()}
                             style="background: rgba(255,255,255,0.01); cursor: pointer;"
                             role="gridcell"
                             tabindex="0"
@@ -362,6 +444,7 @@ on:click={(event) => { event.stopPropagation(); openSubtaskModal(dateStr, timeSl
                             gridRow={timeIndex + 1}
                             isBeingDragged={draggedSubtaskKey === `${subtask.date}|${subtask.startTime}`}
                             onDragStart={() => handleSubtaskDragStart(`${subtask.date}|${subtask.startTime}`)}
+                            onDragEnd={handleSubtaskDragEnd}
                             onClick={() => handleSubtaskCardClick(subtask)}
                             onResize={(newStartMinutes, newEndMinutes) => onSubtaskResize(subtask.id, newStartMinutes, newEndMinutes)}
                             onStatusChange={(newStatus) => onStatusChange(subtask.id, newStatus)}
