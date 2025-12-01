@@ -119,6 +119,7 @@
 
     // Week navigation
     let currentWeekOffset = 0;
+    let manualNavigation = false; // Track if user is manually navigating
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     // Generate time slots
@@ -131,7 +132,8 @@
     $: weekDates = getWeekDates(currentWeekOffset);
 
     // Update currentWeekOffset when selectedDate changes (from month calendar)
-    $: if (selectedDate) {
+    // but only if not manually navigating
+    $: if (selectedDate && !manualNavigation) {
         const today = new Date();
         const currentDay = today.getDay();
         const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
@@ -210,11 +212,27 @@
 function handleCellClick(date: string, time: string) {
     const key = `${date}|${time}`;
     const existing = eventsIndex[key];
-    console.log('handleCellClick:', { key, existing });
-
+    
+    // If there's a task starting exactly at this time, open it
     if (existing) {
-        console.log('handleCellClick: opening view modal');
+        console.log('handleCellClick: opening view modal for exact match');
         openViewModal(existing, date, time);
+        return;
+    }
+    
+    // Otherwise, check if there's any task that overlaps with this hour slot
+    const clickedMinutes = timeToMinutes(time);
+    const overlappingTask = filteredSubtasks.find(task => {
+        if (task.date !== date) return false;
+        const taskStart = timeToMinutes(task.startTime);
+        const taskEnd = timeToMinutes(task.endTime);
+        // Check if the clicked hour is within the task's time range
+        return taskStart < clickedMinutes + 60 && taskEnd > clickedMinutes;
+    });
+    
+    if (overlappingTask) {
+        console.log('handleCellClick: opening view modal for overlapping task');
+        openViewModal(overlappingTask, date, time);
     } else {
         console.log('handleCellClick: opening create modal');
         openCreateModal(date, time);
@@ -519,15 +537,33 @@ function openCreateModal(date: string, startTime: string) {
     }
 
     function prevWeek() {
+        manualNavigation = true;
         currentWeekOffset--;
+        // Update selectedDate to match the new week
+        const newWeekDates = getWeekDates(currentWeekOffset);
+        if (newWeekDates.length > 0) {
+            selectedDate = new Date(newWeekDates[0]);
+        }
+        setTimeout(() => manualNavigation = false, 0);
     }
 
     function nextWeek() {
+        manualNavigation = true;
         currentWeekOffset++;
+        // Update selectedDate to match the new week
+        const newWeekDates = getWeekDates(currentWeekOffset);
+        if (newWeekDates.length > 0) {
+            selectedDate = new Date(newWeekDates[0]);
+        }
+        setTimeout(() => manualNavigation = false, 0);
     }
 
     function goToToday() {
+        manualNavigation = true;
         currentWeekOffset = 0;
+        // Update selectedDate to today
+        selectedDate = new Date();
+        setTimeout(() => manualNavigation = false, 0);
     }
 
     function handleMonthDayClick(date: Date) {
@@ -692,6 +728,7 @@ function openCreateModal(date: string, startTime: string) {
         padding: 1rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         position: relative;
+        z-index: 1;
     }
 
     .calendar-header {
@@ -700,6 +737,8 @@ function openCreateModal(date: string, startTime: string) {
         align-items: center;
         margin-bottom: 1rem;
         padding: 0.5rem;
+        position: relative;
+        z-index: 2;
     }
 
     .calendar-header button {
@@ -709,9 +748,18 @@ function openCreateModal(date: string, startTime: string) {
         border-radius: 6px;
         cursor: pointer;
         font-weight: 600;
+        position: relative;
+        z-index: 3;
     }
 
+    .calendar-header button:hover {
+        background: #f0f0f0;
+        border-color: #999;
+    }
 
+    .calendar-header button:active {
+        transform: scale(0.95);
+    }
 
 
 
@@ -728,6 +776,8 @@ function openCreateModal(date: string, startTime: string) {
         border: 1px solid #ddd;
         border-radius: 6px;
         overflow: hidden;
+        position: relative;
+        z-index: 3;
     }
 
     .zoom-controls button {
@@ -737,6 +787,16 @@ function openCreateModal(date: string, startTime: string) {
         border-right: 1px solid #ddd;
         font-size: 1rem;
         min-width: 40px;
+        background: white;
+        cursor: pointer;
+    }
+
+    .zoom-controls button:hover {
+        background: #f0f0f0;
+    }
+
+    .zoom-controls button:active {
+        transform: scale(0.95);
     }
 
     .zoom-controls button:last-child {

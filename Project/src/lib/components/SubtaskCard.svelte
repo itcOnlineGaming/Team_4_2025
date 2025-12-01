@@ -630,28 +630,49 @@
 
     .status-badge {
         flex-shrink: 0;
-        width: 16px;
-        height: 16px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
-        border: 1px solid #333;
+        border: 2px solid #333;
         background: white;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 9px;
+        font-size: 12px;
         font-weight: bold;
         transition: all 0.2s;
         padding: 0;
         z-index: 52;
+        position: relative;
+    }
+    
+    /* Add a larger invisible hit area for easier clicking */
+    .status-badge::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        right: -8px;
+        bottom: -8px;
+        border-radius: 50%;
+        cursor: pointer;
     }
 
-    /* Make status badge larger on touch devices */
+    /* Make status badge even larger on touch devices */
     @media (hover: none) and (pointer: coarse) {
         .status-badge {
-            width: 24px;
-            height: 24px;
-            font-size: 12px;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            border-width: 2px;
+        }
+        
+        .status-badge::before {
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
         }
     }
 
@@ -674,7 +695,12 @@
     }
 
     .status-badge:hover {
-        transform: scale(1.15);
+        transform: scale(1.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .status-badge:active {
+        transform: scale(1.1);
     }
 
     .subtask-content {
