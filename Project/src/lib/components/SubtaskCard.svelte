@@ -246,7 +246,6 @@
 
 <div
         class="floating-subtask"
-        class:being-dragged={isBeingDragged}
         class:resizing={isResizing}
         style="
         grid-column: {gridColumn};
@@ -256,6 +255,7 @@
 >
     <div
             class="subtask-positioner"
+            class:being-dragged={isBeingDragged}
             style="
             position: absolute;
             top: {topPosition}px;
@@ -351,12 +351,13 @@
         user-select: none;
         -webkit-user-select: none;
         box-sizing: border-box;
-        cursor: move;
+        cursor: grab;
         z-index: 51;
     }
 
     .subtask-positioner.being-dragged {
         opacity: 0.3;
+        cursor: grabbing;
     }
 
     .subtask-positioner.resizing {
