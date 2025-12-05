@@ -11,3 +11,11 @@ export type SortOption = {
   label: string;
   icon?: string;               
 };
+
+export type QuickTool = {
+  id: string;
+  label: string;
+  icon: string;
+  category?: string;
+  color?: string;
+};

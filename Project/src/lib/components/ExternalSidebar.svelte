@@ -1,7 +1,7 @@
 <script lang="ts">
     // Import the local copy of the external sidebar component
     import SrlSidebar from './external-sidebar/SrlSidebar.svelte';
-    import type { FilterGroup, SortOption } from './external-sidebar/types';
+    import type { FilterGroup, SortOption, QuickTool } from './external-sidebar/types';
     import { createEventDispatcher } from 'svelte';
     
     // Props for controlling the sidebar
@@ -10,6 +10,15 @@
     export let items: any[] = [];
     export let filterGroups: FilterGroup[] = [];
     export let sortOptions: SortOption[] = [];
+    export let quickTools: QuickTool[] = [];
+    export let onOpenTutorial: (() => void) | undefined = undefined;
+    
+    function handleOpenTutorial() {
+        console.log('User Guide clicked, onOpenTutorial:', onOpenTutorial);
+        if (onOpenTutorial) {
+            onOpenTutorial();
+        }
+    }
     
     // Exported state for filtering and sorting (so parent can bind to them)
     export let selectedFilters: Record<string, string[]> = {};
@@ -23,6 +32,10 @@
     function handleToggle(event: CustomEvent<{ collapsed: boolean }>) {
         collapsed = event.detail.collapsed;
         dispatch('toggle', { collapsed });
+    }
+    
+    function handleQuickToolAction(event: CustomEvent<{ toolId: string; item: any }>) {
+        dispatch('quickToolAction', event.detail);
     }
     
     function toggleFilter(groupId: string, value: string) {
@@ -78,10 +91,13 @@
             {items}
             {filterGroups}
             {sortOptions}
+            {quickTools}
+            {onOpenTutorial}
             bind:selectedFilters
             bind:selectedSortId
             bind:filteredItems
             on:toggle={handleToggle}
+            on:quickToolAction={handleQuickToolAction}
         >
             <!-- Custom sections that show as icons when collapsed -->
             <div class="custom-sections">
@@ -103,58 +119,11 @@
                     </div>
                 </div>
 
-                <!-- Help Section -->
-                <div class="custom-section help-section">
-                    <div class="section-header">
-                        <!-- Icon only visible when collapsed -->
-                        <div class="collapsed-icon help-icon" title="Help">
-                            ❓
-                        </div>
-                        <!-- Title only visible when expanded -->
-                        <h3 class="section-title">Help</h3>
-                    </div>
-                    <div class="section-content">
-                        <div class="help-actions">
-                            <button class="action-btn">📖 User Guide</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Results Section -->
-                <div class="custom-section results-section">
-                    <div class="section-header">
-                        <!-- Icon only visible when collapsed -->
-                        <div class="collapsed-icon results-icon" title="Filtered Results">
-                            🔍
-                        </div>
-                        <!-- Title only visible when expanded -->
-                        <h3 class="section-title">Results</h3>
-                    </div>
+                <!-- Content Section -->
+                <div class="custom-section content-section">
                     <div class="section-content">
                         <slot name="content">
-                            <div class="default-content">
-                                <p class="results-count">📋 {filteredItems.length} items match filters</p>
-                                {#if filteredItems.length > 0}
-                                    <ul class="results-list">
-                                        {#each filteredItems.slice(0, 5) as item}
-                                            <li class="result-item">
-                                                <span class="item-priority {item.priority || 'medium'}">
-                                                    {#if item.priority === 'high'}🔴{:else if item.priority === 'low'}🟢{:else}🟡{/if}
-                                                </span>
-                                                <span class="item-title">{item.title || item.name || 'Untitled'}</span>
-                                                <span class="item-status {item.status || 'pending'}">
-                                                    {#if item.status === 'completed'}✅{:else if item.status === 'cancelled'}❌{:else}⏳{/if}
-                                                </span>
-                                            </li>
-                                        {/each}
-                                        {#if filteredItems.length > 5}
-                                            <li class="more-items">...and {filteredItems.length - 5} more</li>
-                                        {/if}
-                                    </ul>
-                                {:else}
-                                    <p class="no-results">🔍 No items match the current filters.</p>
-                                {/if}
-                            </div>
+                            <!-- Additional content will go here -->
                         </slot>
                     </div>
                 </div>
@@ -217,6 +186,7 @@
         color: #4e3d67;
         font-weight: 500;
         transition: background 160ms ease, transform 160ms ease;
+        pointer-events: auto;
     }
 
     .section-content :global(.action-btn:hover) {
@@ -227,10 +197,12 @@
     /* Custom sections styling */
     .custom-sections {
         padding: 0;
+        pointer-events: auto;
     }
 
     .custom-section {
         margin-bottom: 1rem;
+        pointer-events: auto;
     }
 
     .section-header {
@@ -238,6 +210,10 @@
         align-items: center;
         gap: 0.5rem;
         margin-bottom: 0.75rem;
+    }
+
+    :global(.month-sidebar.collapsed) .section-header {
+        margin-bottom: 0;
     }
 
     /* When expanded, header should only show title aligned to the left */
@@ -285,20 +261,15 @@
 
     :global(.month-sidebar.collapsed) .collapsed-icon {
         display: flex; /* Show icons when collapsed */
-        margin-bottom: 8px;
+        margin-bottom: 2px;
     }
 
     :global(.month-sidebar.collapsed) .section-content {
         display: none;
     }
 
-    :global(.month-sidebar.collapsed) .section-header {
-        justify-content: center;
-        margin-bottom: 0;
-    }
-
     :global(.month-sidebar.collapsed) .custom-section {
-        margin-bottom: 0;
+        margin-bottom: 2px;
         padding: 0;
     }
 
@@ -315,90 +286,4 @@
     
 
     
-    /* Help Actions */
-    .help-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    /* Results Section */
-    .results-count {
-        margin: 0 0 0.75rem 0;
-        font-weight: 600;
-        color: #4e3d67;
-        font-size: 0.85rem;
-    }
-
-    .results-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .result-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        background: #f9f7ff;
-        border: 1px solid #e8dff5;
-        border-radius: 6px;
-        font-size: 0.8rem;
-    }
-
-    .item-priority {
-        flex-shrink: 0;
-        font-size: 0.7rem;
-    }
-
-    .item-title {
-        flex: 1;
-        color: #4e3d67;
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .item-status {
-        flex-shrink: 0;
-        font-size: 0.7rem;
-    }
-
-    .more-items {
-        padding: 0.5rem;
-        text-align: center;
-        color: #8c62cf;
-        font-size: 0.75rem;
-        font-style: italic;
-    }
-
-    .no-results {
-        margin: 0;
-        padding: 1rem;
-        text-align: center;
-        color: #8c62cf;
-        font-size: 0.8rem;
-        background: #f9f7ff;
-        border: 1px solid #e8dff5;
-        border-radius: 6px;
-    }
-
-    /* Legacy styles for backward compatibility */
-    .default-content ul {
-        list-style: none;
-        padding: 0;
-        margin: 0.5rem 0;
-    }
-    
-    .default-content li {
-        padding: 0.25rem 0;
-        border-bottom: 1px solid #f0f0f0;
-        color: #666;
-        font-size: 0.9rem;
-    }
 </style>

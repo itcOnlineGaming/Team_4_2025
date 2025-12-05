@@ -420,6 +420,7 @@
                             class:drop-target={draggedSubtaskKey && key !== draggedFromKey && !eventsIndex[key]}
                             on:mouseup={() => handleCellDrop(dateStr, timeSlot)}
                             on:click={(event) => { event.stopPropagation(); openSubtaskModal(dateStr, timeSlot); }}
+                            on:keydown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openSubtaskModal(dateStr, timeSlot); } }}
                             on:dragover={(e) => e.preventDefault()}
                             style="background: rgba(255,255,255,0.01); cursor: pointer;"
                             role="gridcell"
