@@ -414,11 +414,11 @@
             <div class="task-badges">
                 <div class="priority-badge {subtask.priority || 'medium'}">
                     {#if subtask.priority === 'high'}
-                        🔴
+                        High
                     {:else if subtask.priority === 'low'}
-                        🟢
+                        Low
                     {:else}
-                        🟡
+                        Med
                     {/if}
                 </div>
                 <button class="status-badge {subtask.status || 'pending'}" on:click={handleStatusClick} type="button">
@@ -611,27 +611,40 @@
         display: flex;
         gap: 2px;
         align-items: center;
-        z-index: 5;
+        z-index: 100;
         flex-shrink: 0;
+        pointer-events: auto;
     }
 
     .priority-badge {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
+        height: 18px;
+        padding: 2px 8px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 8px;
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid #ccc;
+        font-size: 10px;
+        font-weight: 600;
         flex-shrink: 0;
+        color: white;
+    }
+
+    .priority-badge.high {
+        background: #d32f2f;
+    }
+
+    .priority-badge.medium {
+        background: #f57c00;
+    }
+
+    .priority-badge.low {
+        background: #388e3c;
     }
 
     .status-badge {
         flex-shrink: 0;
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
         border: 2px solid #333;
         background: white;
@@ -639,22 +652,23 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: bold;
         transition: all 0.2s;
         padding: 0;
-        z-index: 52;
+        z-index: 100;
         position: relative;
+        pointer-events: auto;
     }
     
     /* Add a larger invisible hit area for easier clicking */
     .status-badge::before {
         content: '';
         position: absolute;
-        top: -8px;
-        left: -8px;
-        right: -8px;
-        bottom: -8px;
+        top: -12px;
+        left: -12px;
+        right: -12px;
+        bottom: -12px;
         border-radius: 50%;
         cursor: pointer;
     }
@@ -662,17 +676,17 @@
     /* Make status badge even larger on touch devices */
     @media (hover: none) and (pointer: coarse) {
         .status-badge {
-            width: 32px;
-            height: 32px;
-            font-size: 16px;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
             border-width: 2px;
         }
         
         .status-badge::before {
-            top: -6px;
-            left: -6px;
-            right: -6px;
-            bottom: -6px;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
         }
     }
 

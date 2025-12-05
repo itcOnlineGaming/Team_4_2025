@@ -1,13 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
   import "./style.css";
-  import type { FilterGroup, SortOption } from "./types";
+  import type { FilterGroup, SortOption, QuickTool } from "./types";
 
   /* Props ------------------------------ */
   export let title = "Filters";
   export let items: any[] = [];
   export let filterGroups: FilterGroup[] = [];
   export let sortOptions: SortOption[] = [];
+  export let quickTools: QuickTool[] = [];
   export let initialSortId: string | null = null;
 
   export let selectedFilters: Record<string, string[]> = {};
@@ -16,6 +17,7 @@
 
   export let showAuthSection = false;
   export let isAuthenticated = false;
+  export let onOpenTutorial: (() => void) | undefined = undefined;
 
   /* Helper Fns -------------------------- */
   export let filterFn = (item: any, active: Record<string, string[]>) => {
@@ -74,6 +76,32 @@
 
   function logout() {
     dispatch("logout");
+  }
+
+  /* Quick Tools drag & drop ------------ */
+  let draggedItem: any = null;
+  let dragOverToolId: string | null = null;
+  let quickToolsExpanded = false;
+
+  function handleToolDrop(toolId: string) {
+    if (draggedItem) {
+      dispatch("quickToolAction", { toolId, item: draggedItem });
+      draggedItem = null;
+      dragOverToolId = null;
+    }
+  }
+
+  function handleDragOver(event: DragEvent, toolId: string) {
+    event.preventDefault();
+    dragOverToolId = toolId;
+  }
+
+  function handleDragLeave() {
+    dragOverToolId = null;
+  }
+
+  function toggleQuickTools() {
+    quickToolsExpanded = !quickToolsExpanded;
   }
 
   /* Sync filters ------------------------- */
@@ -209,6 +237,104 @@
         </label>
       {/each}
     </div>
+  </div>
+
+  <!-- QUICK TOOLS SECTION ------------------------------------------------- -->
+  {#if quickTools.length > 0}
+    <div class="sidebar-section quick-tools">
+
+      <!-- Collapsed -->
+      {#if collapsed}
+        <div class="collapsed-icon" title="Quick Tools">
+          ⚡
+        </div>
+      {/if}
+
+      <!-- Expanded - Header with Toggle -->
+      {#if !collapsed}
+        <div class="section-header-collapsible">
+          <h3>
+            <span>⚡</span>
+            Quick Tools
+          </h3>
+          <button 
+            class="expand-button"
+            on:click={toggleQuickTools}
+            aria-label={quickToolsExpanded ? "Collapse quick tools" : "Expand quick tools"}
+            aria-expanded={quickToolsExpanded}
+          >
+            {quickToolsExpanded ? "▼" : "▶"}
+          </button>
+        </div>
+      {/if}
+
+      <!-- Tools Grid - Only show when expanded -->
+      {#if !collapsed && quickToolsExpanded}
+        <div class="tools-grid">
+          {#each quickTools as tool}
+            <div
+              class="tool-dropzone"
+              class:drag-over={dragOverToolId === tool.id}
+              on:drop|preventDefault={() => handleToolDrop(tool.id)}
+              on:dragover={(e) => handleDragOver(e, tool.id)}
+              on:dragleave={handleDragLeave}
+              role="button"
+              tabindex="0"
+              aria-label={tool.label}
+            >
+              <span class="tool-icon">{tool.icon}</span>
+              <span class="tool-label">{tool.label}</span>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Drag Instructions -->
+        <p class="drag-hint">
+          Drag items from Results below onto a tool
+        </p>
+      {/if}
+
+    </div>
+
+    <!-- FILTERED ITEMS / DRAGGABLE ITEMS ------------------------------- -->
+    {#if !collapsed}
+      <div class="sidebar-section filtered-items">
+        <h3>📌 Results</h3>
+        
+        <div class="draggable-items-list">
+          {#each filteredItems as item}
+            <div
+              class="draggable-item"
+              draggable="true"
+              on:dragstart={() => draggedItem = item}
+              on:dragend={() => draggedItem = null}
+              role="button"
+              tabindex="0"
+            >
+              <span class="drag-handle">⋮⋮</span>
+              <span class="item-title">{item.title || item.name}</span>
+              {#if item.status}
+                <span class="item-status {item.status}">{item.status}</span>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
+  {/if}
+
+  <!-- HELP SECTION -------------------------------------------------------- -->
+  <div class="sidebar-section help-section">
+    {#if !collapsed}
+      <h3>Help</h3>
+      <button 
+        type="button" 
+        class="user-guide-btn"
+        on:click={() => onOpenTutorial?.()}
+      >
+        📖 User Guide
+      </button>
+    {/if}
   </div>
 
   <slot />
