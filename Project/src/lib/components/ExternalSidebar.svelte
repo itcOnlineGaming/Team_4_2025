@@ -1,7 +1,9 @@
 <script lang="ts">
-    // Import the local copy of the external sidebar component
-    import SrlSidebar from './external-sidebar/SrlSidebar.svelte';
-    import type { FilterGroup, SortOption, QuickTool } from './external-sidebar/types';
+    // Import from @rwm/srl-sidebar package (node_modules path)
+    // Source: https://github.com/itcOnlineGaming/RWM_P2_2025_Emily_Breen
+    import { SrlSidebar } from '../../../node_modules/@rwm/srl-sidebar/packages/srl-sidebar/src/index';
+    import type { FilterGroup, SortOption, QuickTool } from '../../../node_modules/@rwm/srl-sidebar/packages/srl-sidebar/src/index';
+    import '../../../node_modules/@rwm/srl-sidebar/packages/srl-sidebar/src/style.css';
     import { createEventDispatcher } from 'svelte';
     
     // Props for controlling the sidebar
@@ -92,7 +94,6 @@
             {filterGroups}
             {sortOptions}
             {quickTools}
-            {onOpenTutorial}
             bind:selectedFilters
             bind:selectedSortId
             bind:filteredItems
@@ -116,6 +117,23 @@
                         <slot name="calendar">
                             <!-- Calendar content will go here -->
                         </slot>
+                    </div>
+                </div>
+
+                <!-- Help Section -->
+                <div class="custom-section help-section">
+                    <div class="section-header">
+                        <!-- Icon only visible when collapsed -->
+                        <div class="collapsed-icon help-icon" title="Help">
+                            ❓
+                        </div>
+                        <!-- Title only visible when expanded -->
+                        <h3 class="section-title">Help</h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="help-actions">
+                            <button class="action-btn" on:click={handleOpenTutorial}>📖 User Guide</button>
+                        </div>
                     </div>
                 </div>
 
@@ -143,13 +161,22 @@
         z-index: 1000;
         overflow: hidden;
         transition: width 220ms ease;
+        display: flex;
+        flex-direction: column;
     }
     
     .external-sidebar-wrapper.collapsed {
-        width: 64px;
-        overflow: hidden;
+        width: 80px;
+        overflow: visible;
+        background: linear-gradient(180deg, #f4eaff 0%, #eadbf9 100%);
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     }
     
+    /* Make sure the inner sidebar fills the full height when collapsed */
+    .external-sidebar-wrapper.collapsed :global(.month-sidebar) {
+        height: 100vh !important;
+        background: transparent !important;
+    }
 
     
     /* Calendar section styling */
