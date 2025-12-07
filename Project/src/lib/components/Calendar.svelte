@@ -6,6 +6,8 @@
 
     import MonthCalendar from './MonthCalendar.svelte';
     import ExternalSidebar from './ExternalSidebar.svelte';
+    import Tutorial from './Tutorial.svelte';
+    import type { QuickTool } from './external-sidebar/types';
     import {
         subtasks,
         createNewSubtask,
@@ -60,8 +62,76 @@
     let externalSidebarVisible = true;
     let sidebarCollapsed = false;
     
+    // Tutorial modal state
+    let showTutorial = false;
+    
     function handleSidebarToggle(event: CustomEvent<{ collapsed: boolean }>) {
         sidebarCollapsed = event.detail.collapsed;
+    }
+    
+    function handleOpenTutorial() {
+        console.log('handleOpenTutorial called');
+        showTutorial = true;
+        console.log('showTutorial is now:', showTutorial);
+    }
+    
+    function handleTutorialComplete() {
+        showTutorial = false;
+    }
+    
+    // Quick Tools for sidebar
+    const quickTools: QuickTool[] = [
+        { id: 'complete', label: 'Complete', icon: '✅', category: 'status', color: '#22c55e' },
+        { id: 'in-progress', label: 'In Progress', icon: '🔄', category: 'status', color: '#3b82f6' },
+        { id: 'pending', label: 'Pending', icon: '⏳', category: 'status', color: '#6b7280' },
+        { id: 'high-priority', label: 'High Priority', icon: '🔴', category: 'priority', color: '#ef4444' },
+        { id: 'medium-priority', label: 'Medium Priority', icon: '🟡', category: 'priority', color: '#f59e0b' },
+        { id: 'low-priority', label: 'Low Priority', icon: '🟢', category: 'priority', color: '#10b981' },
+        { id: 'delete', label: 'Delete', icon: '🗑️', category: 'action', color: '#dc2626' },
+        { id: 'duplicate', label: 'Duplicate', icon: '📋', category: 'action', color: '#8b5cf6' },
+    ];
+
+    function handleQuickToolAction(event: CustomEvent<{ toolId: string; item: any }>) {
+        const { toolId, item } = event.detail;
+        
+        switch (toolId) {
+            case 'complete':
+                updateSubtask(item.id, { status: 'completed' });
+                break;
+            case 'in-progress':
+                // Note: 'in-progress' may not be valid status, using pending instead
+                updateSubtask(item.id, { status: 'pending' });
+                break;
+            case 'pending':
+                updateSubtask(item.id, { status: 'pending' });
+                break;
+            case 'high-priority':
+                updateSubtask(item.id, { priority: 'high' });
+                break;
+            case 'medium-priority':
+                updateSubtask(item.id, { priority: 'medium' });
+                break;
+            case 'low-priority':
+                updateSubtask(item.id, { priority: 'low' });
+                break;
+            case 'delete':
+                if (confirm(`Delete "${item.title}"?`)) {
+                    deleteSubtask(item.id);
+                }
+                break;
+            case 'duplicate':
+                const duration = getSubtaskDuration(item);
+                createNewSubtask(
+                    item.date,
+                    item.startTime,
+                    `${item.title} (Copy)`,
+                    item.description,
+                    minutesToTime(duration),
+                    item.priority,
+                    item.majorTaskId
+                );
+                break;
+        }
     }
     
     // Transform subtasks for sidebar filtering
@@ -119,6 +189,7 @@
 
     // Week navigation
     let currentWeekOffset = 0;
+    let manualNavigation = false; // Track if user is manually navigating
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     // Generate time slots
@@ -131,7 +202,8 @@
     $: weekDates = getWeekDates(currentWeekOffset);
 
     // Update currentWeekOffset when selectedDate changes (from month calendar)
-    $: if (selectedDate) {
+    // but only if not manually navigating
+    $: if (selectedDate && !manualNavigation) {
         const today = new Date();
         const currentDay = today.getDay();
         const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
@@ -210,11 +282,27 @@
 function handleCellClick(date: string, time: string) {
     const key = `${date}|${time}`;
     const existing = eventsIndex[key];
-    console.log('handleCellClick:', { key, existing });
-
+    
+    // If there's a task starting exactly at this time, open it
     if (existing) {
-        console.log('handleCellClick: opening view modal');
+        console.log('handleCellClick: opening view modal for exact match');
         openViewModal(existing, date, time);
+        return;
+    }
+    
+    // Otherwise, check if there's any task that overlaps with this hour slot
+    const clickedMinutes = timeToMinutes(time);
+    const overlappingTask = filteredSubtasks.find(task => {
+        if (task.date !== date) return false;
+        const taskStart = timeToMinutes(task.startTime);
+        const taskEnd = timeToMinutes(task.endTime);
+        // Check if the clicked hour is within the task's time range
+        return taskStart < clickedMinutes + 60 && taskEnd > clickedMinutes;
+    });
+    
+    if (overlappingTask) {
+        console.log('handleCellClick: opening view modal for overlapping task');
+        openViewModal(overlappingTask, date, time);
     } else {
         console.log('handleCellClick: opening create modal');
         openCreateModal(date, time);
@@ -519,15 +607,33 @@ function openCreateModal(date: string, startTime: string) {
     }
 
     function prevWeek() {
+        manualNavigation = true;
         currentWeekOffset--;
+        // Update selectedDate to match the new week
+        const newWeekDates = getWeekDates(currentWeekOffset);
+        if (newWeekDates.length > 0) {
+            selectedDate = new Date(newWeekDates[0]);
+        }
+        setTimeout(() => manualNavigation = false, 0);
     }
 
     function nextWeek() {
+        manualNavigation = true;
         currentWeekOffset++;
+        // Update selectedDate to match the new week
+        const newWeekDates = getWeekDates(currentWeekOffset);
+        if (newWeekDates.length > 0) {
+            selectedDate = new Date(newWeekDates[0]);
+        }
+        setTimeout(() => manualNavigation = false, 0);
     }
 
     function goToToday() {
+        manualNavigation = true;
         currentWeekOffset = 0;
+        // Update selectedDate to today
+        selectedDate = new Date();
+        setTimeout(() => manualNavigation = false, 0);
     }
 
     function handleMonthDayClick(date: Date) {
@@ -570,31 +676,20 @@ function openCreateModal(date: string, startTime: string) {
         bind:visible={externalSidebarVisible} 
         title="Calendar & Tasks" 
         items={sidebarItems}
+        {quickTools}
+        onOpenTutorial={handleOpenTutorial}
         bind:selectedFilters={sidebarSelectedFilters}
         bind:selectedSortId={sidebarSelectedSortId}
         bind:filteredItems
         on:toggle={handleSidebarToggle}
+        on:quickToolAction={handleQuickToolAction}
     >
         <div slot="calendar">
             <MonthCalendar bind:selectedDate bind:viewDate={calendarViewDate} />
         </div>
         
         <div slot="content">
-            <!-- Filtered Results Summary -->
-            <div class="filter-results">
-                <p><strong>{filteredSubtasks.length}</strong> of <strong>{$subtasks.length}</strong> tasks shown</p>
-                {#if filteredSubtasks.length > 0}
-                    <div class="task-summary">
-                        <div class="status-counts">
-                            <div>Pending: {filteredSubtasks.filter(t => t.status === 'pending').length}</div>
-                            <div>Completed: {filteredSubtasks.filter(t => t.status === 'completed').length}</div>
-                            <div>Cancelled: {filteredSubtasks.filter(t => t.status === 'cancelled').length}</div>
-                        </div>
-                    </div>
-                {:else}
-                    <p class="no-results">No tasks match the current filters.</p>
-                {/if}
-            </div>
+            <!-- Content slot intentionally empty -->
         </div>
     </ExternalSidebar>
 
@@ -673,6 +768,13 @@ function openCreateModal(date: string, startTime: string) {
     </div>
 </div>
 
+<!-- Tutorial Modal -->
+{#if showTutorial}
+    <Tutorial 
+        onComplete={handleTutorialComplete}
+    />
+{/if}
+
 <style>
     .calendar-shell {
         display: flex;
@@ -692,6 +794,7 @@ function openCreateModal(date: string, startTime: string) {
         padding: 1rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         position: relative;
+        z-index: 1;
     }
 
     .calendar-header {
@@ -700,6 +803,8 @@ function openCreateModal(date: string, startTime: string) {
         align-items: center;
         margin-bottom: 1rem;
         padding: 0.5rem;
+        position: relative;
+        z-index: 2;
     }
 
     .calendar-header button {
@@ -709,9 +814,18 @@ function openCreateModal(date: string, startTime: string) {
         border-radius: 6px;
         cursor: pointer;
         font-weight: 600;
+        position: relative;
+        z-index: 3;
     }
 
+    .calendar-header button:hover {
+        background: #f0f0f0;
+        border-color: #999;
+    }
 
+    .calendar-header button:active {
+        transform: scale(0.95);
+    }
 
 
 
@@ -728,6 +842,8 @@ function openCreateModal(date: string, startTime: string) {
         border: 1px solid #ddd;
         border-radius: 6px;
         overflow: hidden;
+        position: relative;
+        z-index: 3;
     }
 
     .zoom-controls button {
@@ -737,6 +853,16 @@ function openCreateModal(date: string, startTime: string) {
         border-right: 1px solid #ddd;
         font-size: 1rem;
         min-width: 40px;
+        background: white;
+        cursor: pointer;
+    }
+
+    .zoom-controls button:hover {
+        background: #f0f0f0;
+    }
+
+    .zoom-controls button:active {
+        transform: scale(0.95);
     }
 
     .zoom-controls button:last-child {
@@ -820,33 +946,6 @@ function openCreateModal(date: string, startTime: string) {
             opacity: 1;
             transform: translateY(0);
         }
-    }
-
-    /* Filter Results Styling */
-    .filter-results {
-        font-size: 0.85rem;
-        color: #4e3d67;
-    }
-
-    .filter-results p {
-        margin: 0.5rem 0;
-    }
-
-    .task-summary {
-        margin-top: 0.75rem;
-    }
-
-    .status-counts {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        font-size: 0.8rem;
-        color: #666;
-    }
-
-    .no-results {
-        color: #999;
-        font-style: italic;
     }
 </style>
 

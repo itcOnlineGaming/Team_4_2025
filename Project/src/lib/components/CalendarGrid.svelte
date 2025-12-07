@@ -420,6 +420,7 @@
                             class:drop-target={draggedSubtaskKey && key !== draggedFromKey && !eventsIndex[key]}
                             on:mouseup={() => handleCellDrop(dateStr, timeSlot)}
                             on:click={(event) => { event.stopPropagation(); openSubtaskModal(dateStr, timeSlot); }}
+                            on:keydown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openSubtaskModal(dateStr, timeSlot); } }}
                             on:dragover={(e) => e.preventDefault()}
                             style="background: rgba(255,255,255,0.01); cursor: pointer;"
                             role="gridcell"
@@ -435,13 +436,12 @@
         <div class="subtasks-layer" style="grid-template-rows: repeat({timeSlots.length}, {pixelsPerHour}px);">
             {#each Object.values(eventsIndex) as subtask}
                 {@const dayIndex = weekDates.findIndex(d => d.toISOString().split('T')[0] === subtask.date)}
-                {@const timeIndex = timeSlots.findIndex(t => t === subtask.startTime)}
-                {#if dayIndex !== -1 && timeIndex !== -1}
+                {#if dayIndex !== -1}
                     <SubtaskCard
                             {subtask}
                             {pixelsPerHour}
                             gridColumn={dayIndex + 1}
-                            gridRow={timeIndex + 1}
+                            gridRow={1}
                             isBeingDragged={draggedSubtaskKey === `${subtask.date}|${subtask.startTime}`}
                             onDragStart={() => handleSubtaskDragStart(`${subtask.date}|${subtask.startTime}`)}
                             onDragEnd={handleSubtaskDragEnd}

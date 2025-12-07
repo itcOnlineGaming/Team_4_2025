@@ -14,12 +14,12 @@
         },
         {
             title: "Create Major Tasks",
-            content: "Click the + button at the bottom left to create major tasks that span multiple days. These represent your big goals for the week.",
+            content: "Click the + button at the bottom right to create major tasks that span multiple days. These represent your big goals for the week.",
             highlight: "fab-container"
         },
         {
             title: "Add Subtasks",
-            content: "Click on any time slot to create a subtask. You can assign it to a major task, set priority (high/medium/low), and add details.",
+            content: "Click on any time slot to create a subtask. You can assign it to a major task, set priority (high/medium/low), and add details. Tasks can be scheduled at any time, not just on the hour (e.g., 13:45)!",
             highlight: "calendar-cell"
         },
         {
@@ -28,13 +28,18 @@
             highlight: "subtask-card"
         },
         {
+            title: "Priority Tournament",
+            content: "Having trouble deciding task priorities? Use the Task Battle feature! It presents your tasks in tournament-style matchups where you pick which task is more important. The winner determines the final priority rankings automatically.",
+            highlight: "feedback-button"
+        },
+        {
             title: "Filter & Sort",
-            content: "Use the sidebar to filter tasks by status (pending/completed/cancelled) or priority. You can also sort by date, status, or priority.",
+            content: "Use the sidebar to filter tasks by status (pending/completed/cancelled) or priority. You can also sort by date, status, or priority to focus on what matters most.",
             highlight: "sidebar"
         },
         {
             title: "Track Your Progress",
-            content: "Mark tasks as completed by clicking the status badge. Your daily activity is tracked automatically!",
+            content: "Mark tasks as completed by clicking the status badge. Your daily activity is tracked automatically to help you monitor productivity!",
             highlight: "status-badge"
         }
     ];

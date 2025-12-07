@@ -15,7 +15,8 @@
     font-family: Arial, Helvetica, sans-serif;
     color: #3b2b4a;
     height: 100vh;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* Collapsed */
@@ -85,11 +86,19 @@
     gap: 0.75rem;
 }
 
+.month-sidebar.collapsed .sidebar-section {
+    gap: 0.15rem;
+}
+
 h3 {
     color: #4e3d67;
     font-size: 0.85rem;
-    margin: 0;
+    margin: 0 0 0.5rem 0;
     font-weight: 600;
+}
+
+.month-sidebar.collapsed h3 {
+    margin: 0;
 }
 
 
@@ -162,7 +171,7 @@ input[type='radio'] {
 .month-sidebar.collapsed .sort {
     display: flex;
     justify-content: center;
-    margin: 0.4rem 0;
+    margin: 0.25rem 0;
     padding: 0;
 }
 
@@ -244,4 +253,201 @@ input[type='radio'] {
         border-radius: 0 16px 16px 0;
         z-index: 999;
     }
+}
+
+
+/* ============================================================
+   QUICK TOOLS SECTION
+   ============================================================ */
+
+.section-header-collapsible {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.section-header-collapsible h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.expand-button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: #8c62cf;
+    padding: 4px;
+    transition: transform 0.2s;
+}
+
+.expand-button:hover {
+    transform: scale(1.2);
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.tool-dropzone {
+    background: #ffffff;
+    border: 2px dashed #d5c3e9;
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: all 180ms ease;
+    min-height: 70px;
+    justify-content: center;
+}
+
+.tool-dropzone:hover {
+    background: #f4eaff;
+    border-color: #8c62cf;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(140, 98, 207, 0.15);
+}
+
+.tool-dropzone.drag-over {
+    background: #eadbf9;
+    border-color: #8c62cf;
+    border-style: solid;
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(140, 98, 207, 0.3);
+}
+
+.tool-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.tool-label {
+    font-size: 0.7rem;
+    color: #4e3d67;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.drag-hint {
+    margin: 0.75rem 0 0 0;
+    font-size: 0.7rem;
+    color: #8c62cf;
+    text-align: center;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+
+/* ============================================================
+   FILTERED ITEMS / DRAGGABLE ITEMS
+   ============================================================ */
+
+.draggable-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.draggable-item {
+    background: #f9f7fc;
+    border: 1px solid #e5d9f2;
+    border-radius: 8px;
+    padding: 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: grab;
+    transition: all 150ms ease;
+}
+
+.draggable-item:hover {
+    background: #f4eaff;
+    border-color: #d5c3e9;
+    transform: translateX(4px);
+}
+
+.draggable-item:active {
+    cursor: grabbing;
+    opacity: 0.6;
+}
+
+.drag-handle {
+    font-size: 0.9rem;
+    color: #8c62cf;
+    opacity: 0.6;
+    cursor: grab;
+}
+
+.item-title {
+    flex: 1;
+    font-size: 0.8rem;
+    color: #4e3d67;
+    font-weight: 500;
+}
+
+.item-status {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.item-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.item-status.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.item-status.cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/* ============================================================
+   HELP SECTION / USER GUIDE BUTTON
+   ============================================================ */
+
+.help-section {
+    margin-top: 1rem;
+}
+
+.user-guide-btn {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    background: #f4eaff;
+    border: 1px solid #d5c3e9;
+    border-radius: 8px;
+    color: #4e3d67;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 180ms ease;
+}
+
+.user-guide-btn:hover {
+    background: #eadbf9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(140, 98, 207, 0.15);
+}
+
+.user-guide-btn:active {
+    transform: translateY(0);
 }
