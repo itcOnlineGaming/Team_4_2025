@@ -7,7 +7,8 @@
     import MonthCalendar from './MonthCalendar.svelte';
     import ExternalSidebar from './ExternalSidebar.svelte';
     import Tutorial from './Tutorial.svelte';
-    import type { QuickTool } from './external-sidebar/types';
+    // Import from @rwm/srl-sidebar package
+    import type { QuickTool } from '../../../node_modules/@rwm/srl-sidebar/packages/srl-sidebar/src/index';
     import {
         subtasks,
         createNewSubtask,
@@ -84,11 +85,11 @@
         { id: 'complete', label: 'Complete', icon: '✅', category: 'status', color: '#22c55e' },
         { id: 'in-progress', label: 'In Progress', icon: '🔄', category: 'status', color: '#3b82f6' },
         { id: 'pending', label: 'Pending', icon: '⏳', category: 'status', color: '#6b7280' },
-        { id: 'high-priority', label: 'High Priority', icon: '🔴', category: 'priority', color: '#ef4444' },
-        { id: 'medium-priority', label: 'Medium Priority', icon: '🟡', category: 'priority', color: '#f59e0b' },
-        { id: 'low-priority', label: 'Low Priority', icon: '🟢', category: 'priority', color: '#10b981' },
+        { id: 'high-priority', label: 'High Priority', icon: '🔴', category: 'organization', color: '#ef4444' },
+        { id: 'medium-priority', label: 'Medium Priority', icon: '🟡', category: 'organization', color: '#f59e0b' },
+        { id: 'low-priority', label: 'Low Priority', icon: '🟢', category: 'organization', color: '#10b981' },
         { id: 'delete', label: 'Delete', icon: '🗑️', category: 'action', color: '#dc2626' },
-        { id: 'duplicate', label: 'Duplicate', icon: '📋', category: 'action', color: '#8b5cf6' },
+        { id: 'schedule-next', label: 'Schedule Next Day', icon: '📅', category: 'action', color: '#8b5cf6' },
     ];
 
     function handleQuickToolAction(event: CustomEvent<{ toolId: string; item: any }>) {
@@ -119,17 +120,29 @@
                     deleteSubtask(item.id);
                 }
                 break;
-            case 'duplicate':
-                const duration = getSubtaskDuration(item);
-                createNewSubtask(
-                    item.date,
+            case 'schedule-next':
+                // Schedule task for next day at the same time
+                console.log('Schedule next clicked for item:', item);
+                const taskDate = new Date(item.date);
+                taskDate.setDate(taskDate.getDate() + 1);
+                const nextDayDate = taskDate.toISOString().split('T')[0];
+                console.log('Creating task for next day:', nextDayDate);
+                
+                const scheduledTask = createNewSubtask(
+                    nextDayDate,
                     item.startTime,
-                    `${item.title} (Copy)`,
-                    item.description,
-                    minutesToTime(duration),
-                    item.priority,
-                    item.majorTaskId
+                    item.endTime,
+                    item.title,
+                    item.description || '',
+                    'pending',
+                    item.majorTaskId,
+                    undefined,
+                    item.priority || 'medium'
                 );
+                console.log('Created scheduled task:', scheduledTask);
+                
+                // Add the new task to the store
+                subtasks.update(tasks => [...tasks, scheduledTask]);
                 break;
         }
     }
@@ -155,15 +168,18 @@
     // Apply sidebar filters to subtasks and update what's displayed in calendar
     $: {
         let filtered = [...$subtasks];
+        console.log('Total subtasks before filtering:', filtered.length, filtered.map(t => ({id: t.id, date: t.date, title: t.title})));
         
         // Apply status filter
         if (sidebarSelectedFilters.status && sidebarSelectedFilters.status.length > 0) {
             filtered = filtered.filter(task => sidebarSelectedFilters.status.includes(task.status));
+            console.log('After status filter:', filtered.length, 'filters:', sidebarSelectedFilters.status);
         }
         
         // Apply priority filter
         if (sidebarSelectedFilters.priority && sidebarSelectedFilters.priority.length > 0) {
             filtered = filtered.filter(task => sidebarSelectedFilters.priority.includes(task.priority));
+            console.log('After priority filter:', filtered.length, 'filters:', sidebarSelectedFilters.priority);
         }
         
         // Apply sorting
@@ -180,6 +196,7 @@
         }
         
         filteredSubtasks = filtered;
+        console.log('Final filteredSubtasks:', filtered.length);
     }
 
     // Zoom state: pixels per hour (default 60px = 1 hour)
@@ -237,6 +254,8 @@
             const key = `${event.date}|${event.startTime}`;
             eventsIndex[key] = event;
         });
+        console.log('Built eventsIndex with', Object.keys(eventsIndex).length, 'entries');
+        console.log('eventsIndex keys:', Object.keys(eventsIndex));
     }
 
     function getWeekDates(offset: number): Date[] {

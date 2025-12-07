@@ -1,0 +1,12 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": ["**/node_modules/@rwm/srl-sidebar"]
+  },
+  "files.exclude": {
+    "**/node_modules/@rwm/srl-sidebar": true
+  },
+  "search.exclude": {
+    "**/node_modules/@rwm/srl-sidebar": true
+  }
+}
