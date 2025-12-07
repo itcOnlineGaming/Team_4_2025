@@ -4,6 +4,19 @@
     import Calendar from '$lib/components/Calendar.svelte';
     import FeedBackButton from '$lib/components/FeedBackButton.svelte';
     import { subtasks, updateSubtask } from '$lib/stores/subtasks';
+    import HeatmapButton from '$lib/components/HeatmapButton.svelte';
+    import HeatmapModal from '$lib/components/HeatmapModal.svelte';
+    import { dailyActivity } from '$lib/stores/dailyActivity';
+
+    let showHeatmapModal = false;
+
+    function openHeatmapModal() {
+        showHeatmapModal = true;
+    }
+
+    function closeHeatmapModal() {
+        showHeatmapModal = false;
+    }
 
     interface TaskBattleResult {
         id: string;
@@ -122,6 +135,14 @@
     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1rem; margin-top: 1.5rem;">
         <FeedBackButton formUrl="https://docs.google.com/forms/d/e/1FAIpQLSdZ-SvMCCUtNef0xh4V4pEj-rCvK7VwQjV50e05OuxgLJeNHQ/viewform?usp=dialog" />
     </div>
+
+    <HeatmapButton onClick={openHeatmapModal} />
+
+    <HeatmapModal
+            showModal={showHeatmapModal}
+            activityStore={dailyActivity}
+            onClose={closeHeatmapModal}
+    />
 
     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2rem; margin-top: 1.5rem;">
         <button class="feedback-button" on:click={handleTaskBattle}>

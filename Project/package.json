@@ -25,6 +25,7 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"@dylan-crimmings/activity-heatmap": "github:itcOnlineGaming/RWM_P2_2025_Dylan_Crimmings",
 		"dependencies": "^0.0.1",
 		"snackbar-project": "^1.0.11",
 		"task-battle": "github:Splashdamage115/RWM_P0_c00283152#v1.0.3"
