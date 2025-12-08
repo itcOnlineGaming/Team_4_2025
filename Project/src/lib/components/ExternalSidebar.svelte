@@ -1,9 +1,9 @@
 <script lang="ts">
     // Import from @rwm/srl-sidebar package (node_modules path)
     // Source: https://github.com/itcOnlineGaming/RWM_P2_2025_Emily_Breen
-    import { SrlSidebar } from '../../../node_modules/@rwm/srl-sidebar/packages/srl-sidebar/src/index';
-    import type { FilterGroup, SortOption, QuickTool } from '../../../node_modules/@rwm/srl-sidebar/packages/srl-sidebar/src/index';
-    import '../../../node_modules/@rwm/srl-sidebar/packages/srl-sidebar/src/style.css';
+    import { SrlSidebar } from '@rwm/srl-sidebar';
+    import type { FilterGroup, SortOption, QuickTool } from '@rwm/srl-sidebar';
+    import '@rwm/srl-sidebar/style.css';
     import { createEventDispatcher } from 'svelte';
     
     // Props for controlling the sidebar

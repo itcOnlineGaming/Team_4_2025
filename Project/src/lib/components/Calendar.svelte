@@ -8,7 +8,7 @@
     import ExternalSidebar from './ExternalSidebar.svelte';
     import Tutorial from './Tutorial.svelte';
     // Import from @rwm/srl-sidebar package
-    import type { QuickTool } from '../../../node_modules/@rwm/srl-sidebar/packages/srl-sidebar/src/index';
+    import type { QuickTool } from '@rwm/srl-sidebar';
     import {
         subtasks,
         createNewSubtask,
